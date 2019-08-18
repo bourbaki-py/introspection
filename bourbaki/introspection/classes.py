@@ -55,9 +55,10 @@ def parameterized_classpath(t: type):
         return parameterized_classpath(t)
 
     args = get_generic_args(t, evaluate=True)
+    origin = get_generic_origin(t)
     if not args:
-        return classpath(t)
-    return "{}[{}]".format(classpath(t), ', '.join(map(_inner, args)))
+        return classpath(origin)
+    return "{}[{}]".format(classpath(origin), ','.join(map(_inner, args)))
 
 
 def most_specific_constructor(t: type, return_class=False):
