@@ -4,9 +4,8 @@ import typing
 import re
 import sys
 import collections
-from inspect import signature
 from itertools import combinations
-from functools import lru_cache, singledispatch
+from functools import singledispatch
 import typing_inspect
 from typing_inspect import is_callable_type, get_origin, get_parameters, get_generic_bases as _get_generic_bases
 from .debug import trace
@@ -14,7 +13,6 @@ from .debug import trace
 
 NON_TYPING_STDLIB_MODULES = frozenset(("builtins", "collections", "datetime", "time", "ipadress", "pathlib", "urllib",
                                        "uuid", "numbers", "decimal", "fractions", "re", "_sre", "os", "enum"))
-signature_ = lru_cache(None)(signature)
 
 
 if sys.version_info[:2] >= (3, 7):  # pragma: no cover
@@ -162,7 +160,7 @@ def _eval_args(args):
             elif arg[1] is Ellipsis:
                 res.append(Callable[..., callable_args[1]])
             else:
-                res.append(Callable[list(callable_args[:-1]), callable_args[-1]])
+                res.append(Callable[[*callable_args[:-1]], callable_args[-1]])
         else:
             res.append(type(arg[0]).__getitem__(arg[0], _eval_args(arg[1:])))
     return tuple(res)

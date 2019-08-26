@@ -7,6 +7,7 @@ from .wrappers import cached_getter
 from .imports import import_type
 from .utils import identity
 from .types.evaluation import deconstruct_generic, reconstruct_generic
+from .types.inspection import is_named_tuple_class, get_named_tuple_arg_types
 
 NoneType = type(None)
 Empty = Parameter.empty
@@ -87,6 +88,8 @@ class TupleWrapper(ReducingGenericWrapper):
     require_same_len = True
 
     def __new__(cls, tup_type, *types):
+        if is_named_tuple_class(tup_type) and not types:
+            types = get_named_tuple_arg_types(tup_type)
         if not types:
             cls = cls._collection_cls
         elif types[-1] is Ellipsis:
@@ -99,8 +102,10 @@ class TupleWrapper(ReducingGenericWrapper):
         return new
 
     def __init__(self, tup_type, *types):
-        super().__init__(tup_type)
-        self.funcs = tuple(self.getter(t) for t in types)
+        super().__init__(tup_type, *types)
+        if not getattr(self, "funcs", None):
+            # somehow this is being called twice in some instances - haven't identified the source
+            self.funcs = tuple(self.getter(t) for t in types)
 
     def call_iter(self, arg):
         return (d(v) for d, v in zip(self.funcs, arg))
