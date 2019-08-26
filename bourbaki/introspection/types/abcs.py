@@ -1,7 +1,7 @@
 # coding:utf-8
 import typing
 import enum
-from .inspection import is_top_type
+from .inspection import is_top_type, is_named_tuple_class
 
 STDLIB_MODULES = {"builtins", "collections", "typing", "abc", "numbers", "decimal", "re", "_sre", "os",
                   "enum", "datetime", "time", "pathlib", "ipaddress", "urllib", "uuid"}
@@ -88,18 +88,30 @@ class Builtin(metaclass=BuiltinMeta):
 
 
 class BuiltinAtomic(metaclass=BuiltinAtomicMeta):
-    # for registration of a default method for all builtins
+    """for registration of a default method for all builtins"""
     pass
 
 
 class NonStdLibMeta(type):
     def __subclasscheck__(self, subclass):
         # don't allow subclasses of enum.Enum - gray area but they shouldn't generally have custom constuctors
-        return subclass.__module__.split(".")[0] not in STDLIB_MODULES and not issubclass(subclass, enum.Enum)
+        # ditto for NamedTuple classes
+        return (subclass.__module__.split(".")[0] not in STDLIB_MODULES
+                and not issubclass(subclass, enum.Enum)
+                and not is_named_tuple_class(subclass))
 
 
 class NonStdLib(metaclass=NonStdLibMeta):
-    # for registration of types outside of the standard library which may subclass ABCs such as Collection;
-    # we may want to treat them separately in some cases as they may not have the same constructors -
-    # an example is pandas.DataFrame
+    """for registration of types outside of the standard library which may subclass ABCs such as Collection;
+    we may want to treat them separately in some cases as they may not have the same constructors -
+    an example is pandas.DataFrame"""
+    pass
+
+
+class NamedTupleABCMeta(type):
+    def __subclasscheck__(self, subclass):
+        return is_named_tuple_class(subclass)
+
+
+class NamedTupleABC(tuple, metaclass=NamedTupleABCMeta):
     pass

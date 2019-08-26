@@ -3,6 +3,7 @@ from typing import Generic
 import collections
 from functools import partial
 from inspect import Parameter
+from .callables import UnStarred
 from .wrappers import cached_getter
 from .imports import import_type
 from .utils import identity
@@ -114,6 +115,24 @@ class TupleWrapper(ReducingGenericWrapper):
         if self.require_same_len and len(value) != len(self.funcs):
             raise ValueError("{} expected a collection of {} values for type {} but received {}"
                              .format(self, len(self.funcs), self.type_, value))
+        return super().__call__(value)
+
+
+class NamedTupleWrapper(TupleWrapper):
+    reduce_named = None
+    get_named_reducer = staticmethod(identity)
+
+    def __init__(self, tup_type, *types):
+        super().__init__(tup_type, *types)
+        if not getattr(self, "named_funcs", None):
+            self.named_funcs = dict(zip(tup_type._fields, self.funcs))
+        if self.reduce_named is None:
+            self.reduce_named = self.get_named_reducer(tup_type)
+
+    def __call__(self, value):
+        if isinstance(value, collections.Mapping):
+            kwargs = ((name, self.named_funcs[name](v)) for name, v in value.items())
+            return self.reduce_named(kwargs)
         return super().__call__(value)
 
 
