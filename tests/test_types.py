@@ -1,6 +1,6 @@
 # coding:utf-8
 from typing import *
-from typing import Pattern, Match, ChainMap, Counter, TypeVar as TV
+from typing import Pattern, Match, ChainMap, Counter, TypeVar
 import pytest
 import collections
 from collections import abc as collections_abc
@@ -11,8 +11,8 @@ from bourbaki.introspection.types import (issubclass_generic, get_generic_params
                                              constraint_type, LazyType, Builtin, NonStrCollection,
                                              NonAnyStrCollection, NonStrSequence, NonAnyStrSequence)
 
-T_co = TV("T", covariant=True)
-K = TV("K")
+T_co = TypeVar("T", covariant=True)
+K = TypeVar("K")
 
 class Foo(Mapping[K, T_co]): ...
 
@@ -28,6 +28,10 @@ class Baz(Bar[MySpecialStr]):
 
 class Boom(Baz): ...
 
+class FooTuple(NamedTuple):
+    foo: int
+    bar: bool
+    baz: MyStr
 
 newtype1 = NewType("newtype1", List[int])
 
@@ -63,7 +67,7 @@ mapping_chains = [
 ]
 
 tuple_chains = [
-    (Tuple[int, bool, str], Tuple[Number, Union[int, Number], Hashable], Tuple[Union[Number, Hashable], Any, Hashable]),
+    (FooTuple, Tuple[Union[int, complex], int, str], Tuple[Number, Union[int, Number], Hashable], Tuple[Union[Number, Hashable], Any, Hashable]),
     (Tuple[Counter[str], Mapping[str, int]], Tuple[Mapping[str, Number], Mapping[str, Any]], Tuple[Collection[Hashable], ...]),
 ]
 
@@ -127,9 +131,9 @@ def abstract_class_test_cases(classes):
 
 def tvars_and_constraint_types(types):
     for t in types:
-        yield TV("T", bound=t), t
+        yield TypeVar("T", bound=t), t
     for t1, t2 in combinations(types, 2):
-        yield TV("T", t1, t2), Union[t1, t2]
+        yield TypeVar("T", t1, t2), Union[t1, t2]
 
 
 def ordered_pairs(seq):
