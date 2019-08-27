@@ -1,8 +1,13 @@
 #coding:utf-8
+from inspect import signature
+from functools import lru_cache
 
 py_name_re = r'[_a-zA-Z][_a-zA-Z0-9]*'
 
 py_dot_name_re = r'{name}(?:\.{name})*'.format(name=py_name_re)
+
+# this could get call a lot but not on very many different functions; the memory use is worth it
+signature = lru_cache(None)(signature)
 
 
 def identity(x):

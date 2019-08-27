@@ -1,12 +1,15 @@
 # coding:utf-8
 from typing import TypeVar, Union, Type, Optional, Mapping, Any, NewType
+from collections import OrderedDict
 from functools import singledispatch, lru_cache
+from itertools import repeat
 from typing_inspect import get_constraints, get_bound
 from .compat import get_generic_origin, get_generic_params, EVALUATE_DEFAULT
 from .compat import ForwardRef, CallableSignature
 from .abcs import LazyType
 from .debug import trace
-from .inspection import is_callable_origin, is_top_type, is_newtype, get_generic_args, normalized_origin_args
+from .inspection import (is_callable_origin, is_top_type, is_newtype, get_generic_args, normalized_origin_args,
+                         is_named_tuple_class)
 
 _newtype_cache = {}
 
@@ -29,12 +32,15 @@ def fully_concretize_type(t: Type, param_dict: Optional[Mapping[Any, Type]], glo
 
 # materialize delayed string references (forward refs) in type annotations
 
-@singledispatch
-def eval_forward_refs(t, globals_):
+def eval_forward_refs(t, globals_, dont_recurse=()):
+    if t in dont_recurse:
+        return t
     if isinstance(t, ForwardRef):
         return eval(t.__forward_arg__, globals_)
+    if isinstance(t, str):
+        return eval(t, globals_)
 
-    org, args, fixlen = normalized_origin_args(t, remove_tuple_ellipsis=False)
+    org, args, fixlen = normalized_origin_args(t, remove_tuple_ellipsis=False, extract_namedtuple_args=True)
 
     if not args:
         return org
@@ -45,12 +51,17 @@ def eval_forward_refs(t, globals_):
     elif is_callable_origin(org):
         sig, ret = args
         if fixlen:
-            sig = [eval_forward_refs(t, globals_) for t in sig]
+            sig = [eval_forward_refs(s, globals_, (t, *dont_recurse)) for s in sig]
         args = sig, eval_forward_refs(ret, globals_)
     else:
-        args = tuple(eval_forward_refs(a, globals_) for a in args)
-        # if not fixlen:
-        #     args = (*args, Ellipsis)
+        args = tuple(eval_forward_refs(a, globals_, (t, *dont_recurse)) for a in args)
+
+    if is_named_tuple_class(org):
+        typedict = getattr(org, "__annotations__", getattr(org, "_field_types", None))
+        if not typedict:
+            return t
+        typedict.update(zip(org._fields, args))
+        return org
 
     if len(args) == 1:
         args = args[0]
@@ -73,6 +84,8 @@ def _eval_type_tree(tup):
         return t
     if t is NewType:
         return _cached_newtype(*tup)
+    if is_named_tuple_class(t):
+        return t
     if is_callable_origin(t):
         args = _eval_callable_args(args)
     else:
@@ -117,34 +130,54 @@ def constraint_type(tvar: TypeVar):
         return object if bound is None else bound
 
 
+@lru_cache(None)
+def new_namedtuple_subclass(org, args):
+    if args:
+        annotations = OrderedDict(zip(org._fields, args))
+        ns = {"__annotations__": annotations, "_field_types": annotations}
+    else:
+        ns = {}
+    return type(org.__name__, (org,), ns)
+
+
 @singledispatch
-def concretize_typevars(t: type):
-    org, args, _ = normalized_origin_args(t, remove_tuple_ellipsis=False)
+def concretize_typevars(t: type, dont_recurse=()):
+    if t in dont_recurse:
+        return t
+
+    org, args, _ = normalized_origin_args(t, remove_tuple_ellipsis=False, extract_namedtuple_args=True)
     if not args:
         if org is Type:
             return Type[Any]
         args = get_generic_params(t)
         if not args:
             return t
-        args_ = tuple(concretize_typevars(t_) for t_ in args)
+        args_ = tuple(concretize_typevars(t_, (t, *dont_recurse)) for t_ in args)
         if all(map(is_top_type, args_)):
             # don't parameterize with nonspecific parameters
             return t
     else:
         try:
-            args_ = tuple(concretize_typevars(t_) for t_ in args)
+            args_ = tuple(concretize_typevars(t_, (t, *dont_recurse)) for t_ in args)
         except:
             print(org, args)
             raise
+
+    if is_named_tuple_class(org):
+        return new_namedtuple_subclass(org, args_)
+
     return org[args_]
 
 
-concretize_typevars.register(TypeVar)(constraint_type)
+@concretize_typevars.register(TypeVar)
+def _concretize_typevars_typevar(tvar: TypeVar, dont_recurse=()):
+    t = constraint_type(tvar)
+    return concretize_typevars(t, dont_recurse)
 
 
 @concretize_typevars.register(CallableSignature)
-def concretize_typevars_signature(sig: CallableSignature):
-    return list(map(concretize_typevars, sig))
+def concretize_typevars_signature(sig: CallableSignature, dont_recurse=()):
+    return list(map(concretize_typevars, sig, repeat(dont_recurse)))
 
 
 # turn a fully evaluated generic type into a (generic, *args) tuple
@@ -157,6 +190,7 @@ def deconstruct_generic(t):
         id_ = id(t)
         _newtype_cache[id_] = t
         return NewType, t.__name__, deconstruct_generic(t.__supertype__), id_
+
     org, args, fixlen = normalized_origin_args(t, remove_tuple_ellipsis=False)
     if not args:
         return org

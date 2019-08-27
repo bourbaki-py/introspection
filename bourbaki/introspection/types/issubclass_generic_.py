@@ -5,7 +5,7 @@ from functools import lru_cache
 from inspect import getmro
 from itertools import repeat
 from .inspection import (is_tuple_origin, is_top_type, is_callable_origin, is_newtype, base_newtype_of, newtype_chain,
-                         get_generic_args, generic_metadata, normalized_origin_args)
+                         get_generic_args, generic_metadata, normalized_origin_args, is_named_tuple_class)
 from .compat import get_generic_origin, get_generic_params, to_concrete_type, EVALUATE_DEFAULT
 from .evaluation import concretize_typevars, reparameterize_generic
 from .debug import trace
@@ -103,10 +103,10 @@ def _issubclass_newtype_newtype(t1, t2) -> bool:
 
 @trace
 def issubclass_parameterized(t1: Union[type, tuple], t2: Union[type, tuple]) -> bool:
-    org1, args1, fixlen1 = normalized_origin_args(t1)
-    org2, args2, fixlen2 = normalized_origin_args(t2)
+    org1, args1, fixlen1 = normalized_origin_args(t1, extract_namedtuple_args=True)
+    org2, args2, fixlen2 = normalized_origin_args(t2, extract_namedtuple_args=True)
 
-    if is_tuple_origin(org1):
+    if is_tuple_origin(org1) or is_named_tuple_class(org1):
         if fixlen1:
             # fixed-length tuples can be subclasses of sequence/iterable types if all types match
             if fixlen2:

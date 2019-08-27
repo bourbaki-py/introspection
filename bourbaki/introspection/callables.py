@@ -3,19 +3,16 @@ from typing import Union, Sequence, Mapping, Dict, Set, Tuple, Callable, Iterabl
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from collections.abc import Mapping as MappingABC
-from functools import lru_cache, singledispatch
+from functools import lru_cache, singledispatch, update_wrapper
 import functools
-from inspect import Signature, signature, Parameter, BoundArguments
+from inspect import Signature, Parameter, BoundArguments
 from itertools import chain
 from operator import itemgetter
 from types import MappingProxyType
 from multipledispatch import dispatch
 from .types import get_generic_params, fully_concretize_type
 from .classes import most_specific_constructor
-from .utils import nice_exc_args, is_prefix, is_suffix, name_of
-
-# this could get call a lot but not on very many different functions; the memory use is worth it
-signature = lru_cache(None)(signature)
+from .utils import nice_exc_args, is_prefix, is_suffix, name_of, signature
 
 
 class CallableABCMeta(ABCMeta):
@@ -36,6 +33,22 @@ class Callable_(metaclass=CallableABCMeta):
 
 class WrapperSignatureError(TypeError):
     pass
+
+
+class _Wrapper:
+    def __init__(self, func):
+        self.func = func
+        update_wrapper(self, func)
+
+
+class Starred(_Wrapper):
+    def __call__(self, *args, **kwargs):
+        return self.func(args, **kwargs)
+
+
+class UnStarred(_Wrapper):
+    def __call__(self, args, **kwargs):
+        return self.func(*args, **kwargs)
 
 
 def _typeof(cls):

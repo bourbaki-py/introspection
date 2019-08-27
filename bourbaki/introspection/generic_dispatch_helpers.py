@@ -3,10 +3,12 @@ from typing import Generic
 import collections
 from functools import partial
 from inspect import Parameter
+from .callables import UnStarred
 from .wrappers import cached_getter
 from .imports import import_type
 from .utils import identity
 from .types.evaluation import deconstruct_generic, reconstruct_generic
+from .types.inspection import is_named_tuple_class, get_named_tuple_arg_types
 
 NoneType = type(None)
 Empty = Parameter.empty
@@ -87,6 +89,8 @@ class TupleWrapper(ReducingGenericWrapper):
     require_same_len = True
 
     def __new__(cls, tup_type, *types):
+        if is_named_tuple_class(tup_type) and not types:
+            types = get_named_tuple_arg_types(tup_type)
         if not types:
             cls = cls._collection_cls
         elif types[-1] is Ellipsis:
@@ -99,8 +103,10 @@ class TupleWrapper(ReducingGenericWrapper):
         return new
 
     def __init__(self, tup_type, *types):
-        super().__init__(tup_type)
-        self.funcs = tuple(self.getter(t) for t in types)
+        super().__init__(tup_type, *types)
+        if not getattr(self, "funcs", None):
+            # somehow this is being called twice in some instances - haven't identified the source
+            self.funcs = tuple(self.getter(t) for t in types)
 
     def call_iter(self, arg):
         return (d(v) for d, v in zip(self.funcs, arg))
@@ -109,6 +115,24 @@ class TupleWrapper(ReducingGenericWrapper):
         if self.require_same_len and len(value) != len(self.funcs):
             raise ValueError("{} expected a collection of {} values for type {} but received {}"
                              .format(self, len(self.funcs), self.type_, value))
+        return super().__call__(value)
+
+
+class NamedTupleWrapper(TupleWrapper):
+    reduce_named = None
+    get_named_reducer = staticmethod(identity)
+
+    def __init__(self, tup_type, *types):
+        super().__init__(tup_type, *types)
+        if not getattr(self, "named_funcs", None):
+            self.named_funcs = dict(zip(tup_type._fields, self.funcs))
+        if self.reduce_named is None:
+            self.reduce_named = self.get_named_reducer(tup_type)
+
+    def __call__(self, value):
+        if isinstance(value, collections.Mapping):
+            kwargs = ((name, self.named_funcs[name](v)) for name, v in value.items())
+            return self.reduce_named(kwargs)
         return super().__call__(value)
 
 

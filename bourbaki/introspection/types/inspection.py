@@ -53,14 +53,33 @@ def newtype_chain(t):
         next_ = getattr(next_, "__supertype__", sentinel)
 
 
+@lru_cache(None)
+def is_named_tuple_class(cls: type):
+    try:
+        mro = cls.mro()
+    except (AttributeError, TypeError):
+        pass
+    else:
+        if len(mro) > 2:
+            base_nt_cls = mro[-3]
+            # custom subclass with overridden initialization
+            if cls.__new__ is not base_nt_cls.__new__ or cls.__init__ is not base_nt_cls.__init__:
+                return False
+
+    return (isinstance(cls, type) and issubclass(cls, tuple) and all(hasattr(cls, a) for a in ("_asdict", "_replace", "_fields")))
+
+
+def get_named_tuple_arg_types(cls: type):
+    return tuple(cls.__annotations__.values())
+
+
 @singledispatch
 @trace
 def get_generic_args(t, evaluate=EVALUATE_DEFAULT):
     if is_newtype(t):
         return get_generic_args(base_newtype_of(t))
-    if NEW_TYPING:
-        if t in typing_bases or t in generics:
-            return ()
+    if NEW_TYPING and (t in typing_bases or t in generics):
+        return ()
     return get_args(t, evaluate=evaluate) or ()
 
 
@@ -96,8 +115,9 @@ def generic_metadata(t: type, evaluate=EVALUATE_DEFAULT):
 
 # get origin, args, and boolean indicating a fixed-length tuple/signature or not where appropriate, in one call
 
-@lru_cache(None)
-def normalized_origin_args(t, evaluate=EVALUATE_DEFAULT, remove_tuple_ellipsis=True):
+def normalized_origin_args(t, evaluate=EVALUATE_DEFAULT,
+                           remove_tuple_ellipsis=True,
+                           extract_namedtuple_args=False):
     if getattr(t, "__module__", None) in NON_TYPING_STDLIB_MODULES:
         return get_generic_origin(t), (), False
 
@@ -116,6 +136,10 @@ def normalized_origin_args(t, evaluate=EVALUATE_DEFAULT, remove_tuple_ellipsis=T
             # 1 or more args, last is return, leading are signature
             sig, ret = args[:-1], args[-1]
         args = CallableSignature(sig), ret
+        fixlen = True
+    elif is_named_tuple_class(org):
+        if extract_namedtuple_args:
+            args = get_named_tuple_arg_types(org)
         fixlen = True
 
     return org, args, fixlen

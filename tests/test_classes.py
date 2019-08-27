@@ -66,13 +66,13 @@ def test_func_classpath(t, path):
     (List, "List"),
     (List[int], "List[int]"),
     (Mapping, "Mapping"),
-    (Mapping[Tuple[str, int], List[bool]], "Mapping[Tuple[str, int], List[bool]]"),
+    (Mapping[Tuple[str, int], List[bool]], "Mapping[Tuple[str,int],List[bool]]"),
     (some_class, some_class.__classpath__),
     (some_generic, some_generic.__classpath__),
     (some_generic[int], some_generic.__classpath__ + "[int]"),
     (some_generic[List[bool]], some_generic.__classpath__ + "[List[bool]]"),
     (some_generic[Mapping[Tuple[str, int], List[bool]]],
-         some_generic.__classpath__ + "[Mapping[Tuple[str, int], List[bool]]]")
+         some_generic.__classpath__ + "[Mapping[Tuple[str,int],List[bool]]]")
 ])
 def test_parameterized_classpath(t, path):
     assert parameterized_classpath(t) == path
