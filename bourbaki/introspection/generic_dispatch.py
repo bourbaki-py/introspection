@@ -299,7 +299,7 @@ class GenericTypeLevelDispatch:
         return best[0]
 
     def visualize(self, target_sig=None, view=True, path=None, debug=False, title: Optional[str]=None, format_="svg",
-                  highlight_color="lightgreen", highlight_color_error="red", highlight_style="filled"):
+                  highlight_color="green", highlight_color_error="red", highlight_style="filled"):
         if path is None:
             path = mktemp(suffix='-{}.gv'.format(self.__name__))
 
