@@ -9,6 +9,7 @@ from .imports import import_type
 from .utils import identity
 from .types.evaluation import deconstruct_generic, reconstruct_generic
 from .types.inspection import is_named_tuple_class, get_named_tuple_arg_types
+from .types.compat import get_constructor_for
 
 NoneType = type(None)
 Empty = Parameter.empty
@@ -36,7 +37,7 @@ class GenericWrapper(PicklableWithType):
 
 
 class ReducingGenericWrapper(GenericWrapper):
-    get_reducer = staticmethod(identity)
+    get_reducer = staticmethod(get_constructor_for)
     reduce = None
     generic_type = Generic
 

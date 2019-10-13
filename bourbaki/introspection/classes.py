@@ -52,6 +52,9 @@ def parameterized_classpath(t: type):
     def _inner(t):
         if t is Ellipsis:
             return '...'
+        if isinstance(t, list):
+            # for callables
+            return '[{}]'.format(','.join(map(_inner, t)))
         return parameterized_classpath(t)
 
     args = get_generic_args(t, evaluate=True)

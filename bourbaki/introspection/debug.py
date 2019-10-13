@@ -5,7 +5,7 @@ from warnings import warn
 INTROSPECTION_DEBUG_ENV_VAR = "INTROSPECTION_DEBUG"
 
 
-def _trace(f):
+def _trace(f):  # pragma: no cover
     offset = len(stack()) - 2
 
     def f_(*a, **kw):
@@ -23,12 +23,12 @@ def _trace(f):
 
 
 DEBUG = os.environ.get(INTROSPECTION_DEBUG_ENV_VAR, "").lower().strip()
-if DEBUG == "true" or (DEBUG.isdigit() and DEBUG != "0"):
+if DEBUG == "true" or (DEBUG.isdigit() and DEBUG != "0"):  # pragma: no cover
     warn("Found environment variable {}={}; verbose output will be generated for code in the introspection module"
          .format(INTROSPECTION_DEBUG_ENV_VAR, DEBUG))
     DEBUG = True if not DEBUG.isdigit() else int(DEBUG)
     trace = _trace
-else:
+else:  # pragma: no cover
     DEBUG = False
     def trace(x):
         return x

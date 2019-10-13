@@ -14,7 +14,7 @@ from inspect import stack
 from importlib import import_module
 from logging import getLogger
 from .utils import py_dot_name_re
-from .types.compat import typing_to_stdlib_constructor, ForwardRef
+from .types.compat import typing_to_stdlib_constructor, ForwardRef, typetypes
 
 # we'll import this on call to import_type to avoid a circular import
 eval_type_tree = None
@@ -66,7 +66,7 @@ def import_object(classpath):
 
 
 def import_type(parameterized_classpath) -> type:
-    if isinstance(parameterized_classpath, ForwardRef):
+    if isinstance(parameterized_classpath, ForwardRef):  # pragma: no cover
         parameterized_classpath = parameterized_classpath.__forward_arg__
 
     if py_dot_name_regex.fullmatch(parameterized_classpath):
@@ -76,6 +76,10 @@ def import_type(parameterized_classpath) -> type:
         tree = ast.parse(parameterized_classpath, mode="eval").body
         expr = _to_typetree_expr(tree)
         t = _eval_type_tree_expr(expr)
+
+    if not isinstance(t, (type, typetypes)):
+        raise TypeError("import of {} yielded object of type {}, not a type"
+                        .format(parameterized_classpath, type(t)))
     return t
 
 
@@ -209,7 +213,7 @@ class LazyImportsCallable:
     __wrapped__ = None
 
     def __init__(self, modulespecs, func: Callable):
-        if not callable(func):
+        if not callable(func):  # pragma: no cover
             raise TypeError("func must be callable; got {}".format(type(func)))
         if not hasattr(func, "__globals__"):
             raise AttributeError("func must have a __globals__ attribute; type {} does not".format(type(func)))
@@ -241,10 +245,15 @@ class LazyImportsCallable:
 def get_globals(callable_):
     if isinstance(callable_, type):
         try:
-            f = next(f for f in callable_.__dict__.values() if isinstance(f, FunctionType))
-        except StopIteration:
-            raise AttributeError("cannot extract globals dict from class {} with no locally defined methods"
-                                 .format(callable_))
+            mod = import_module(callable_.__module__)
+        except ImportError:
+            try:
+                f = next(f for f in callable_.__dict__.values() if isinstance(f, FunctionType))
+            except StopIteration:  # pragma: no cover
+                raise AttributeError("cannot extract globals dict from class {} with no locally defined methods "
+                                     "and non-importable module {}".format(callable_, callable_.__module__))
+        else:
+            return vars(mod)
     else:
         f = callable_
 
@@ -347,7 +356,7 @@ def _import(module, names=None, asname=None, sourcepath=None, globals_=None, _st
             rename = names
         elif isinstance(names, (list, tuple)):
             rename = dict(t if isinstance(t, tuple) else (t, t) for t in names)
-        else:
+        else:  # pragma: no cover
             raise TypeError("Names must be a dict, list, str, or None; see docstring for details")
 
         namespace = [(rename[n], mod.__dict__[n]) for n in rename]
@@ -379,7 +388,7 @@ def _classpath_and_dir(classpath, sourcepath, checkdir=True):
     return classpath, sourcepath
 
 
-def _isnot(obj1, obj2):
+def _isnot(obj1, obj2):  # pragma: no cover
     try:
         val = obj1 is not obj2
     except Exception:
@@ -408,14 +417,14 @@ def _validate_module_spec(spec, allow_tuple=False):
         if len(spec) == 2:
             modname, imports = spec
 
-            if isinstance(imports, str) and imports != ALL:
+            if isinstance(imports, str) and imports != ALL:  # pragma: no cover
                 raise TypeError("if a string is passed to from_(modname).import_, it must be '*' "
                                 "(aliased to application.imports.ALL); got {}".format(imports))
             if isinstance(imports, (list, tuple)):
                 renames = imports
             elif isinstance(imports, dict):
                 renames = imports.items()
-            else:
+            else:  # pragma: no cover
                 raise TypeError()
 
             bad_renames = [n for n in renames if not _is_valid_rename(n)]
@@ -429,14 +438,14 @@ def _validate_module_spec(spec, allow_tuple=False):
         elif len(spec) == 3:
             modname, imports, asname = spec
 
-            if not isinstance(asname, str):
+            if not isinstance(asname, str):  # pragma: no cover
                 raise TypeError("; got {}"
                                 .format(type(asname)))
-    else:
+    else:  # pragma: no cover
         raise TypeError("An import specification must be one of: from_(module).import_(*names, **renames),"
                         "import_(module).as_(rename), or import_(module); got {}".format(spec))
 
-    if not isinstance(modname, str):
+    if not isinstance(modname, str):  # pragma: no cover
         raise TypeError("The first entry of an import specification must be a string specifying the module to be "
                         "imported (from); got {}".format(modname))
 

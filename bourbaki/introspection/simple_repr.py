@@ -151,15 +151,15 @@ def set_simple_repr_class_attrs(cls, inspect_attrs=INSPECT_ATTRS_DEFAULT,
              "representations than those with *args and only named keyword-only args:\n{} has signature {}"
              .format(cls, sig))
 
-    if not isinstance(inspect_attrs, (bool, tuple, frozenset)):
+    if not isinstance(inspect_attrs, (bool, tuple, frozenset)):  # pragma: no cover
         raise TypeError("inspect_attrs should be a bool or an immutable collection of (tuple, frozenset) "
                         "attribute names to be inspected")
     elif isinstance(inspect_attrs, (tuple, frozenset)):
-        if not all(isinstance(a, str) and str.isidentifier(a) for a in inspect_attrs):
+        if not all(isinstance(a, str) and str.isidentifier(a) for a in inspect_attrs):  # pragma: no cover
             raise TypeError("when a collection of attribute names is passed as inspect_attrs, "
                             "all names should be strings and legal identifiers")
 
-        if any(a not in sig.parameters for a in inspect_attrs):
+        if any(a not in sig.parameters for a in inspect_attrs):  # pragma: no cover
             warn("attribute names {} are not present in the init signature and will be ignored"
                  .format(tuple(set(inspect_attrs).difference(sig.parameters))))
 

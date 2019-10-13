@@ -8,7 +8,7 @@ from itertools import combinations
 from functools import singledispatch
 import typing_inspect
 from typing_inspect import is_callable_type, get_origin, get_parameters, get_generic_bases as _get_generic_bases
-from .debug import trace
+from ..debug import trace
 
 
 NON_TYPING_STDLIB_MODULES = frozenset(("builtins", "collections", "datetime", "time", "ipadress", "pathlib", "urllib",

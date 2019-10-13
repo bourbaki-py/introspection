@@ -27,7 +27,15 @@ class LazyType(typing.Generic[CLS]):
 
 # convenience type aliases for registering functions
 
-class NonCollectionMeta(type):
+class _InstanceCheckFromSubclassCheck(type):
+    def __instancecheck__(self, instance):  # pragma: no cover
+        return self.__subclasscheck__(type(instance))
+
+    def __subclasscheck__(self, subclass):  # pragma: no cover
+        raise NotImplementedError()
+
+
+class NonCollectionMeta(_InstanceCheckFromSubclassCheck):
     def __subclasscheck__(self, subclass):
         return not issubclass(subclass, typing.Collection) or issubclass(subclass, str)
 
@@ -36,12 +44,9 @@ class NonCollection(metaclass=NonCollectionMeta):
     pass
 
 
-class NonStrCollectionMeta(type):
+class NonStrCollectionMeta(_InstanceCheckFromSubclassCheck):
     coll_type = typing.Collection
     non_subclasses = ()
-
-    def __instancecheck__(self, instance):
-        return self.__subclasscheck__(type(instance))
 
     def __subclasscheck__(self, subclass):
         if subclass is self:
@@ -69,7 +74,7 @@ class NonAnyStrSequence(NonAnyStrCollection):
     coll_type = typing.Sequence
 
 
-class BuiltinMeta(type):
+class BuiltinMeta(_InstanceCheckFromSubclassCheck):
     __module__ = "builtins"
 
     def __subclasscheck__(cls, subclass):
@@ -92,7 +97,7 @@ class BuiltinAtomic(metaclass=BuiltinAtomicMeta):
     pass
 
 
-class NonStdLibMeta(type):
+class NonStdLibMeta(_InstanceCheckFromSubclassCheck):
     def __subclasscheck__(self, subclass):
         # don't allow subclasses of enum.Enum - gray area but they shouldn't generally have custom constuctors
         # ditto for NamedTuple classes
@@ -108,7 +113,7 @@ class NonStdLib(metaclass=NonStdLibMeta):
     pass
 
 
-class NamedTupleABCMeta(type):
+class NamedTupleABCMeta(_InstanceCheckFromSubclassCheck):
     def __subclasscheck__(self, subclass):
         return is_named_tuple_class(subclass)
 

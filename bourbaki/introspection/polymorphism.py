@@ -71,7 +71,7 @@ class SingleValueDispatch:
         return dec
 
     def register_fork(self, value_mapping: Optional[Mapping[Hashable, Callable]]=None):
-        if not isinstance(value_mapping, collections.Mapping):
+        if not isinstance(value_mapping, collections.Mapping):  # pragma: no cover
             raise TypeError("value_mapping must be a Mapping instance; got {}".format(type(value_mapping)))
 
         def dec(predicate: Predicate):
@@ -83,7 +83,7 @@ class SingleValueDispatch:
 
     def _insert(self, predicate, f: Optional[Predicate]=None,
                 value_mapping: Optional[Mapping[Hashable, Predicate]]=None):
-        if not callable(predicate):
+        if not callable(predicate):  # pragma: no cover
             raise TypeError("Predicates must be callable; got {}".format(predicate))
 
         self.funcs.append((predicate, value_mapping, f))

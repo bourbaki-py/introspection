@@ -48,12 +48,18 @@ def fmt_pyobj(obj: Mapping, indent: str='', prefix=(), top_level=False, memo=Non
         if ref:
             return ref
 
+    if not len(obj):
+        if top_level:
+            return ''
+        else:
+            return '{}'
+
     if has_identifier_keys(obj):
         if top_level:
             main_template = '{}\n{}'
             joiner = '\n'
         else:
-            main_template = "dict(\n{}\n{})"
+            main_template = "dict(\n{},\n{})"
             joiner = ',\n'
         repr_ = str
         template = "{}{}={}"
@@ -81,7 +87,7 @@ def fmt_pyobj(obj: tuple, indent: str='', prefix=(), top_level=False, memo=None)
             return ref
     if not obj:
         return "()"
-    return fmt_pyobj(obj, "(\n{}\n{})", prefix, indent=indent, memo=memo)
+    return fmt_pyobj(obj, "(\n{},\n{})", prefix, indent=indent, memo=memo)
 
 
 @dispatch(list)
@@ -92,7 +98,7 @@ def fmt_pyobj(obj: list, indent: str='', prefix=(), top_level=False, memo=None):
             return ref
     if not obj:
         return "[]"
-    return fmt_pyobj(obj, "[\n{}\n{}]", prefix, indent=indent, memo=memo)
+    return fmt_pyobj(obj, "[\n{},\n{}]", prefix, indent=indent, memo=memo)
 
 
 @dispatch(set)
@@ -103,7 +109,7 @@ def fmt_pyobj(obj: set, indent: str='', prefix=(), top_level=False, memo=None):
             return ref
     if not obj:
         return "set()"
-    return fmt_pyobj(obj, "{{\n{}\n{}}}", indent=indent, memo=memo)
+    return fmt_pyobj(obj, "{{\n{},\n{}}}", indent=indent, memo=memo)
 
 
 @dispatch(frozenset)
@@ -114,7 +120,7 @@ def fmt_pyobj(obj: set, indent: str='', prefix=(), top_level=False, memo=None):
             return ref
     if not obj:
         return "frozenset()"
-    return fmt_pyobj(obj, "frozenset([\n{}\n{}])", indent=indent, memo=memo)
+    return fmt_pyobj(obj, "frozenset([\n{},\n{}])", indent=indent, memo=memo)
 
 
 @dispatch((tuple, list), str, (tuple,))

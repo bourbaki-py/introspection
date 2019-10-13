@@ -6,7 +6,7 @@ from collections import abc as collections_abc
 from typing_inspect import get_args
 from .compat import get_generic_origin, get_generic_params, get_generic_bases, typing_bases, generics, _parameterize
 from .compat import _TypeAlias, CallableSignature, EVALUATE_DEFAULT, NON_TYPING_STDLIB_MODULES, NEW_TYPING
-from .debug import trace
+from ..debug import trace
 
 # Note: ideally, get_generic_args would be defined in compat, but we define it here because it requires access to
 # is_newtype, which made sense to define here

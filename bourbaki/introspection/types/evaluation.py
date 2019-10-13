@@ -7,7 +7,7 @@ from typing_inspect import get_constraints, get_bound
 from .compat import get_generic_origin, get_generic_params, EVALUATE_DEFAULT
 from .compat import ForwardRef, CallableSignature
 from .abcs import LazyType
-from .debug import trace
+from ..debug import trace
 from .inspection import (is_callable_origin, is_top_type, is_newtype, get_generic_args, normalized_origin_args,
                          is_named_tuple_class)
 

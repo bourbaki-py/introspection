@@ -3,7 +3,7 @@ from inspect import signature, Parameter
 from functools import wraps, update_wrapper, lru_cache
 import dask
 from .debug import _trace as trace
-from .callables import bind, call_with
+from .callables import bind, call_with, name_of
 
 empty = Parameter.empty
 
@@ -38,13 +38,13 @@ def lru_cache_sig_preserving(*args, **kwargs):
         cached = lru_cache(*args, **kwargs)(f)
         cached.__signature__ = signature(f)
         update_wrapper(cached, f)
-        return f
+        return cached
 
     return dec
 
 
 def cached_getter(method):
-    attr = '_' + method.__name__
+    attr = '_' + name_of(method)
 
     def getter(self):
         val = getattr(self, attr, empty)
@@ -64,6 +64,9 @@ class const:
 
     def __str__(self):
         return "{}({})".format(type(self).__name__, repr(self.value))
+
+    def __repr__(self):
+        return str(self)
 
     def __call__(self, *args, **kwargs):
         return self.value

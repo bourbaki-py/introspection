@@ -7,9 +7,10 @@ from collections import abc as collections_abc
 from numbers import Number, Integral, Real
 from itertools import repeat, chain, product, combinations
 from bourbaki.introspection.types import (issubclass_generic, get_generic_params, deconstruct_generic,
-                                             reconstruct_generic, get_constructor_for, eval_forward_refs,
-                                             constraint_type, LazyType, Builtin, NonStrCollection,
-                                             NonAnyStrCollection, NonStrSequence, NonAnyStrSequence)
+                                          reconstruct_generic, get_constructor_for, eval_forward_refs,
+                                          constraint_type, LazyType, Builtin, BuiltinAtomic, NonStdLib,
+                                          NonStrCollection, NonAnyStrCollection, NonStrSequence, NonAnyStrSequence,
+                                          NonCollection, NamedTupleABC)
 
 T_co = TypeVar("T", covariant=True)
 K = TypeVar("K")
@@ -239,3 +240,53 @@ def test_py36_fake_types(type1, type2, pos):
         assert issubclass_generic(type1, type2)
     else:
         assert not issubclass_generic(type1, type2)
+
+
+@pytest.mark.parametrize('abc,cls', [
+    (NonStrCollection, list),
+    (NonStrCollection, set),
+    (NonStrCollection, bytes),
+    (NonStrCollection, NonStrCollection),
+    (NonAnyStrCollection, tuple),
+    (NonAnyStrCollection, frozenset),
+    (NonAnyStrCollection, Foo),
+    (NonAnyStrCollection, NonAnyStrCollection),
+    (NonStrSequence, tuple),
+    (NonStrSequence, bytes),
+    (NonAnyStrSequence, tuple),
+    (Builtin, bool),
+    (Builtin, frozenset),
+    (BuiltinAtomic, str),
+    (BuiltinAtomic, int),
+    (BuiltinAtomic, bool),
+    (NonStdLib, Foo),
+    (NonStdLib, MyStr),
+    (NonCollection, str),
+    (NonCollection, MyStr),
+    (NamedTupleABC, FooTuple),
+])
+def test_abc_has_subclass(abc, cls):
+    assert issubclass(cls, abc)
+
+
+@pytest.mark.parametrize('abc,cls', [
+    (NonStrCollection, str),
+    (NonAnyStrCollection, str),
+    (NonAnyStrCollection, bytes),
+    (NonStrSequence, str),
+    (NonAnyStrSequence, str),
+    (NonAnyStrSequence, bytes),
+    (Builtin, Foo),
+    (Builtin, MyStr),
+    (BuiltinAtomic, list),
+    (BuiltinAtomic, set),
+    (BuiltinAtomic, Foo),
+    (BuiltinAtomic, MyStr),
+    (NonStdLib, int),
+    (NonStdLib, list),
+    (NonCollection, frozenset),
+    (NonCollection, tuple),
+    (NamedTupleABC, tuple),
+])
+def test_abc_does_not_have_subclass(abc, cls):
+    assert not issubclass(cls, abc)

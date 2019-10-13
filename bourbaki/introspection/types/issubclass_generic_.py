@@ -8,7 +8,7 @@ from .inspection import (is_tuple_origin, is_top_type, is_callable_origin, is_ne
                          get_generic_args, generic_metadata, normalized_origin_args, is_named_tuple_class)
 from .compat import get_generic_origin, get_generic_params, to_concrete_type, EVALUATE_DEFAULT
 from .evaluation import concretize_typevars, reparameterize_generic
-from .debug import trace
+from ..debug import trace
 
 T_co = TypeVar("T_co", covariant=True)
 
