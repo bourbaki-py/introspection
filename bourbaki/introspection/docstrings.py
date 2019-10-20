@@ -1,5 +1,6 @@
 # coding:utf-8
 from typing import Dict, Tuple, Union, Callable
+from enum import Enum
 from itertools import chain
 import re
 from .utils import py_name_re, py_dot_name_re
@@ -20,6 +21,16 @@ raises_regex = re.compile(r'^(?P<indent>\s*)[:@]raise(?:s)? (?:(?P<type>{})):(?:
 
 leading_whitespace = re.compile(r"\s*")
 
+google_param_regex = re.compile(r'^(?P<indent>\s*)(?P<stars>\*{1,2})?(?P<name>%s)(?:\s+\((?P<type>[^)]+)\))?:(?:\s+(?P<doc>.*))?\s*'
+                                % py_name_re)
+
+google_return_regex = re.compile(r'^(?P<indent>\s*)(?:(?P<type>[\w\s]+\w)):(?:\s+(?P<doc>.*))?\s*')
+
+google_raises_regex = re.compile(r'^(?P<indent>\s*)(?:(?P<type>{})):(?:\s+(?P<doc>.*))?\s*'
+                                 .format(py_dot_name_re))
+
+google_block_heading_regex = re.compile(r'^(?P<indent>\s*)(?P<heading>[A-Z][A-Za-z]+):\s*')
+
 
 def _dedent(line, indent):
     if re.match(indent, line):
@@ -27,8 +38,20 @@ def _dedent(line, indent):
     return line.lstrip()
 
 
+def _indentation(line):
+    indent = leading_whitespace.match(line)
+    if indent:
+        return indent.group()
+    return ''
+
+
 class NoDocString(AttributeError, TypeError):
     pass
+
+
+class DocStyle(Enum):
+    sphinx = 'sphinx-style docstrings'
+    google = 'google-style docstrings'
 
 
 class CallableDocs:
@@ -108,7 +131,12 @@ class ParamDocs(Dict[str, ParamDoc]):
         return '\n'.join(map(str, self.values()))
 
 
-def parse_docstring(doc_or_documented: Union[str, Callable]) -> CallableDocs:
+def parse_docstring(doc_or_documented: Union[str, Callable], style: DocStyle=DocStyle.sphinx) -> CallableDocs:
+    if isinstance(style, str):
+        style = getattr(DocStyle, style, style)
+    if not isinstance(style, DocStyle):
+        raise TypeError("style must be one of {}; got {}".format(tuple(s.name for s  in DocStyle), style))
+
     arg_error = "argument to parse_docstring must be a string or object with a string __doc__ attribute; got {}"
     if isinstance(doc_or_documented, str):
         doc = doc_or_documented
@@ -120,6 +148,15 @@ def parse_docstring(doc_or_documented: Union[str, Callable]) -> CallableDocs:
     if doc is None:
         return CallableDocs()
 
+    if style == DocStyle.sphinx:
+        parser = parse_sphinx_style_docstring
+    elif style == DocStyle.google:
+        parser = parse_google_style_docstring
+
+    return parser(doc)
+
+
+def parse_sphinx_style_docstring(doc: str) -> CallableDocs:
     return_ = dict(doc=None, type=None)
     raises = []
     short = []
@@ -130,7 +167,7 @@ def parse_docstring(doc_or_documented: Union[str, Callable]) -> CallableDocs:
     last_indent = None
 
     regexes = [param_regex, param_type_regex, raises_regex, return_regex, rtype_regex]
-    SHORT, LONG, PARAM, PARAMTYPE, RAISES, RETURN, RTYPE = 0, 1, 2, 3, 4, 5, 6
+    SHORT, LONG, PARAM, PARAMTYPE, RAISES, RETURN, RTYPE = range(7)
 
     state = SHORT
     for line in doc.split('\n'):
@@ -190,3 +227,141 @@ def parse_docstring(doc_or_documented: Union[str, Callable]) -> CallableDocs:
     return CallableDocs(short_desc='\n'.join(short).rstrip(),
                         long_desc='\n'.join(long).rstrip(),
                         params=params, raises=raises, returns=return_)
+
+
+def parse_google_style_docstring(doc: str) -> CallableDocs:
+    # raise NotImplementedError()
+    short = []
+    long = []
+    params = []
+    raises = []
+    return_ = dict(doc=None, type=None)
+    doc_indent = None
+    heading_indent = None
+    block_indent = None
+    firstline = True
+
+    SHORT, LONG, PARAM_BLOCK, RAISES_BLOCK, RETURN_BLOCK, RETURN, UNKNOWN_BLOCK = range(7)
+    heading_states = {
+        'args': PARAM_BLOCK,
+        'arguments': PARAM_BLOCK,
+        'return': RETURN_BLOCK,
+        'returns': RETURN_BLOCK,
+        'raise': RAISES_BLOCK,
+        'raises': RAISES_BLOCK,
+    }
+
+    def heading_state(line, fallback=None, heading_indent=None):
+        heading_match = google_block_heading_regex.fullmatch(line)
+        if heading_match:
+            dict_ = heading_match.groupdict()
+            this_heading_indent = dict_.pop('indent')
+            if heading_indent is None or heading_indent == this_heading_indent:
+                heading = dict_['heading'].lower()
+                print("FOUND HEADING", heading)
+                return heading_states.get(heading.lower(), UNKNOWN_BLOCK), this_heading_indent
+
+        return fallback, heading_indent
+
+    def add_to_last_doc(line, indent, dict_, key='doc'):
+        if indent:
+            line = _dedent(line, indent)
+        dict_[key] = '\n'.join(d or '' for d in (dict_[key], line))
+
+    state = SHORT
+    for line in doc.split('\n'):
+        print("STATE:", state)
+        print("LINE:", repr(line))
+        is_whitespace = leading_whitespace.fullmatch(line)
+
+        if state == SHORT:
+            state, heading_indent = heading_state(line, state, heading_indent)
+            if state == SHORT:
+                if not short and (not is_whitespace) and (not firstline):
+                    doc_indent = _indentation(line)
+                elif short and not doc_indent:
+                    doc_indent = _indentation(line)
+
+                if doc_indent:
+                    line = _dedent(line, doc_indent)
+
+                if line and not is_whitespace:
+                    short.append(line)
+                elif short:
+                    state = LONG
+        elif state == LONG:
+            state, heading_indent = heading_state(line, state, heading_indent)
+            if state == LONG:
+                if not long and (not is_whitespace) and (not doc_indent):
+                    doc_indent = _indentation(line)
+                if doc_indent:
+                    line = _dedent(line, doc_indent)
+                if long or (not long and not is_whitespace):
+                    long.append(line)
+        elif state in (PARAM_BLOCK, RAISES_BLOCK):
+            param_list, pattern = (params, google_param_regex) if state == PARAM_BLOCK else (raises, google_raises_regex)
+            param_match = pattern.fullmatch(line)
+
+            thisdict = param_match.groupdict() if param_match else None
+            print("MATCH DICT", thisdict)
+            if param_match and (block_indent is None or thisdict['indent'] == block_indent):
+                print("SET BLOCK INDENT", repr(thisdict['indent']), len(thisdict['indent']))
+                block_indent = thisdict.pop('indent')
+                thisdict.pop('stars', None)
+                param_list.append(thisdict)
+            else:
+                print("CHECK FOR HEADING")
+                maybe_state, heading_indent = heading_state(line, state, heading_indent)
+                if maybe_state == state:
+                    # continued docs for last arg
+                    if param_list:
+                        add_to_last_doc(line, block_indent, param_list[-1])
+                else:
+                    state = maybe_state
+        elif state == RETURN_BLOCK:
+            return_match = google_return_regex.fullmatch(line)
+
+            thisdict = return_match.groupdict() if return_match else None
+            if return_match and (block_indent is None or thisdict['indent'] == block_indent):
+                print("RETURN ANNOTATION MATCH")
+                print("SET BLOCK INDENT", repr(thisdict['indent']), len(thisdict['indent']))
+                block_indent = thisdict.pop('indent')
+                return_ = thisdict
+                state = RETURN
+            else:
+                print("CHECK FOR HEADING")
+                state, heading_indent = heading_state(line, RETURN, heading_indent)
+                if state == RETURN:
+                    if block_indent is None:
+                        print("SET BLOCK INDENT", repr(_indentation(line)), len(_indentation(line)))
+                        block_indent = _indentation(line)
+                    add_to_last_doc(line, block_indent, return_)
+                else:
+                    print("NEW STATE", state)
+        elif state == RETURN:
+            state, heading_indent = heading_state(line, state, heading_indent)
+            if state == RETURN:
+                add_to_last_doc(line, block_indent, return_)
+        elif state == UNKNOWN_BLOCK:
+            state, heading_indent = heading_state(line, state, heading_indent)
+
+        if firstline:
+            firstline = False
+
+    print("FINAL DOC INDENT", repr(doc_indent), len(doc_indent))
+    print("FINAL HEADING INDENT", repr(heading_indent), len(heading_indent))
+    print("FINAL BLOCK INDENT", repr(block_indent), len(block_indent))
+
+    for p in chain(params, raises, (return_,)):
+        d = p["doc"]
+        if isinstance(d, str):
+            p["doc"] = d.rstrip()
+
+    rtype = return_["type"]
+    if isinstance(rtype, str):
+        return_["type"] = rtype.strip()
+
+    return CallableDocs(short_desc='\n'.join(short).rstrip(),
+                        long_desc='\n'.join(long).rstrip(),
+                        params=params, raises=raises, returns=return_)
+
