@@ -258,7 +258,6 @@ def parse_google_style_docstring(doc: str) -> CallableDocs:
             this_heading_indent = dict_.pop('indent')
             if heading_indent is None or heading_indent == this_heading_indent:
                 heading = dict_['heading'].lower()
-                print("FOUND HEADING", heading)
                 return heading_states.get(heading.lower(), UNKNOWN_BLOCK), this_heading_indent
 
         return fallback, heading_indent
@@ -270,8 +269,6 @@ def parse_google_style_docstring(doc: str) -> CallableDocs:
 
     state = SHORT
     for line in doc.split('\n'):
-        print("STATE:", state)
-        print("LINE:", repr(line))
         is_whitespace = leading_whitespace.fullmatch(line)
 
         if state == SHORT:
@@ -303,14 +300,11 @@ def parse_google_style_docstring(doc: str) -> CallableDocs:
             param_match = pattern.fullmatch(line)
 
             thisdict = param_match.groupdict() if param_match else None
-            print("MATCH DICT", thisdict)
             if param_match and (block_indent is None or thisdict['indent'] == block_indent):
-                print("SET BLOCK INDENT", repr(thisdict['indent']), len(thisdict['indent']))
                 block_indent = thisdict.pop('indent')
                 thisdict.pop('stars', None)
                 param_list.append(thisdict)
             else:
-                print("CHECK FOR HEADING")
                 maybe_state, heading_indent = heading_state(line, state, heading_indent)
                 if maybe_state == state:
                     # continued docs for last arg
@@ -323,21 +317,15 @@ def parse_google_style_docstring(doc: str) -> CallableDocs:
 
             thisdict = return_match.groupdict() if return_match else None
             if return_match and (block_indent is None or thisdict['indent'] == block_indent):
-                print("RETURN ANNOTATION MATCH")
-                print("SET BLOCK INDENT", repr(thisdict['indent']), len(thisdict['indent']))
                 block_indent = thisdict.pop('indent')
                 return_ = thisdict
                 state = RETURN
             else:
-                print("CHECK FOR HEADING")
                 state, heading_indent = heading_state(line, RETURN, heading_indent)
                 if state == RETURN:
                     if block_indent is None:
-                        print("SET BLOCK INDENT", repr(_indentation(line)), len(_indentation(line)))
                         block_indent = _indentation(line)
                     add_to_last_doc(line, block_indent, return_)
-                else:
-                    print("NEW STATE", state)
         elif state == RETURN:
             state, heading_indent = heading_state(line, state, heading_indent)
             if state == RETURN:
@@ -347,10 +335,6 @@ def parse_google_style_docstring(doc: str) -> CallableDocs:
 
         if firstline:
             firstline = False
-
-    print("FINAL DOC INDENT", repr(doc_indent), len(doc_indent))
-    print("FINAL HEADING INDENT", repr(heading_indent), len(heading_indent))
-    print("FINAL BLOCK INDENT", repr(block_indent), len(block_indent))
 
     for p in chain(params, raises, (return_,)):
         d = p["doc"]
