@@ -77,7 +77,11 @@ docs_sphinx = parse_docstring(foo, DocStyle.sphinx)
 
 docs_google = parse_docstring(bar, DocStyle.google)
 
-all_docs = pytest.mark.parametrize("docs", [docs_sphinx, docs_google])
+docs_auto_sphinx = parse_docstring(foo, DocStyle.auto)
+
+docs_auto_google = parse_docstring(bar, DocStyle.auto)
+
+all_docs = pytest.mark.parametrize("docs", [docs_sphinx, docs_google, docs_auto_sphinx, docs_auto_google])
 
 
 @all_docs

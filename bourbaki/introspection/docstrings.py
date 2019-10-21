@@ -52,6 +52,7 @@ class NoDocString(AttributeError, TypeError):
 class DocStyle(Enum):
     sphinx = 'sphinx-style docstrings'
     google = 'google-style docstrings'
+    auto = 'infer docstring style'
 
 
 class CallableDocs:
@@ -131,7 +132,7 @@ class ParamDocs(Dict[str, ParamDoc]):
         return '\n'.join(map(str, self.values()))
 
 
-def parse_docstring(doc_or_documented: Union[str, Callable], style: DocStyle=DocStyle.sphinx) -> CallableDocs:
+def parse_docstring(doc_or_documented: Union[str, Callable], style: DocStyle=DocStyle.auto) -> CallableDocs:
     if isinstance(style, str):
         style = getattr(DocStyle, style, style)
     if not isinstance(style, DocStyle):
@@ -152,6 +153,18 @@ def parse_docstring(doc_or_documented: Union[str, Callable], style: DocStyle=Doc
         parser = parse_sphinx_style_docstring
     elif style == DocStyle.google:
         parser = parse_google_style_docstring
+    else:
+        lines = doc.splitlines()
+        n_sphinx_params = sum(1 for line in lines if param_regex.match(line))
+        n_google_params = sum(1 for line in lines if google_param_regex.match(line))
+        if not n_sphinx_params and not n_google_params:
+            parser = parse_google_style_docstring
+            for line in lines:
+                if return_regex.match(line) or rtype_regex.match(line) or raises_regex.match(line):
+                    parser = parse_sphinx_style_docstring
+                    break
+        else:
+            parser = parse_sphinx_style_docstring if n_sphinx_params > n_google_params else parse_google_style_docstring
 
     return parser(doc)
 
@@ -348,4 +361,3 @@ def parse_google_style_docstring(doc: str) -> CallableDocs:
     return CallableDocs(short_desc='\n'.join(short).rstrip(),
                         long_desc='\n'.join(long).rstrip(),
                         params=params, raises=raises, returns=return_)
-
