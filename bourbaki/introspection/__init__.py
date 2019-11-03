@@ -10,6 +10,6 @@ from .simple_repr import with_simple_repr
 from .subclassing import subclass_method, subclass_mutator_method
 from .typechecking import type_checker
 from .types import issubclass_generic
-from .wrappers import ArgPreparer, cached_getter, lru_cache_sig_preserving, trace
+from .wrappers import ArgPreparer, cached_getter, lru_cache_sig_preserving
 
 __version__ = '0.2.2'
