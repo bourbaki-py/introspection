@@ -318,21 +318,18 @@ class GenericTypeLevelDispatch:
         except ImportError:
             raise ImportError("the visualize method requires graphviz and networkx>=2.0")
 
-        if path is None:
-            path = mktemp(suffix='-{}.gv'.format(self.__name__))
+        dag = self.dag()
 
         if title is None:
             title = ("Signature DAG for {} {} with {} signatures"
-                     .format(type(self).__name__, self.__name__, len(self.dag)))
+                     .format(type(self).__name__, self.__name__, len(dag)))
 
         d = Dot(self.__name__, format=format_)
         d.attr(label=title)
-        # don't remove edges in debug mode
-        # dag = self.dag if debug else transitive_reduction(self.dag)
-
-        # >>>>>>
-        dag = self.dag()
         d.edges((str(b), str(a)) for a, b in dag.edges)
+
+        if path is None:
+            path = mktemp(suffix='-{}.gv'.format(self.__name__))
 
         if target_sig is not None:
             if not isinstance(target_sig, tuple):
@@ -378,14 +375,6 @@ class GenericTypeLevelDispatch:
                 dag.add_edge(sig2, sig1)
         return transitive_reduction(dag)
 
-    # def cleanup(self, clear_cache=False):
-    #     dag = transitive_reduction(self.dag)
-    #     dag.add_nodes_from(self.dag.nodes(data=True))
-    #     self.dag = dag
-    #     if clear_cache:
-    #         self._cache.clear()
-    #     return self
-
     def __getstate__(self):
         state = self.__dict__.copy()
         # funcs, dag, cache, sig_cache, bot, top = (state.pop(attr) for attr in
@@ -405,8 +394,7 @@ class GenericTypeLevelDispatch:
         return state
 
     def __setstate__(self, state):
-        funcs, (nodes, edges), cache, sig_cache, bot, top = (
-            state.pop(attr) for attr in ["funcs", "dag", "_cache", "_sig_cache", "_bottoms", "_tops"])
+        funcs, cache, sig_cache = (state.pop(attr) for attr in ["funcs", "_cache", "_sig_cache"])
         state["funcs"], state["_cache"] = (_reconstruct_mapping(m) for m in (funcs, cache))
         state["_sig_cache"] = _reconstruct_mapping(sig_cache, values=True)
         # state["_bottoms"], state["_tops"] = (_reconstruct_collection(c, set) for c in (bot, top))
