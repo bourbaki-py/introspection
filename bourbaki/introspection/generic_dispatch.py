@@ -1,8 +1,8 @@
 # coding:utf-8
-from typing import List, Tuple, Deque, Iterable, Callable, Dict, Type, Union, Optional, Generic
+from typing import List, Tuple, Callable, Dict, Type, Union, Optional, Generic
 import re
 from tempfile import mktemp
-from itertools import chain, combinations, filterfalse
+from itertools import chain, combinations
 from .debug import DEBUG
 from .wrappers import const
 from .utils import name_of
@@ -38,26 +38,6 @@ def generalizes(sig1: Signature, sig2: Signature) -> bool:
     return len(sig1) == len(sig2) and all(issubclass_generic(t2, t1) for t1, t2 in zip(sig1, sig2))
 
 
-# def bottoms(d: DiGraph):
-#     return [n for n, deg in d.in_degree() if deg == 0]
-#
-#
-# def tops(d: DiGraph):
-#     return [n for n, deg in d.out_degree() if deg == 0]
-#
-#
-# def most_specific(d: DiGraph, sigs: Optional[List[Signature]]=None):
-#     if sigs is not None:
-#         d = induced_subgraph(d, sigs)
-#     return bottoms(d)
-#
-#
-# def most_general(d: DiGraph, sigs: Optional[List[Signature]]=None):
-#     if sigs is not None:
-#         d = induced_subgraph(d, sigs)
-#     return tops(d)
-
-
 def verbose_call(f):
     def verbose_f(*args):
         result = f(*args)
@@ -72,30 +52,6 @@ def call_repr(f, args, to_str=repr):
 
 def type_str(t):
     return re.sub(r'\btyping\.\b', '', str(t))
-
-
-# def _depth_first(dag: DiGraph, root: Signature, sig: Signature, memo: set,
-#                  edge_predicate: Callable[[Signature, Signature], bool]=refines) -> Iterable[Signature]:
-#     for node in filterfalse(memo.__contains__, chain((root,), neighbors(dag, root))):
-#         memo.add(node)
-#         if edge_predicate(sig, node):
-#             yield node
-#             memo.update(dag.successors(node))
-#         else:
-#             yield from _depth_first(dag, node, sig, memo, edge_predicate)
-#
-#
-# def _breadth_first(dag: DiGraph, roots: Deque[Signature], sig: Signature, memo: set,
-#                    edge_predicate: Callable[[Signature, Signature], bool]=refines) -> Iterable[Signature]:
-#     while roots:
-#         node = roots.popleft()
-#         if node not in memo:
-#             memo.add(node)
-#             if edge_predicate(sig, node):
-#                 yield node
-#                 memo.update(dag.successors(node))
-#             else:
-#                 roots.extend(neighbors(dag, node))
 
 
 def _deconstruct_signature(sig):
@@ -184,47 +140,10 @@ class GenericTypeLevelDispatch:
         return self
 
     def insert(self, sig, f, *, debug=DEBUG):
-        if sig not in self.funcs:
-            # dag = self.dag
-            # order = len(dag)
-            #
-            # if len(dag) > 0:
-            #     parents = list(self._resolve_iter(sig, debug=debug))
-            #     children = list(self._resolve_iter(sig, reverse=True, debug=debug))
-            #
-            #     parents = most_specific(dag, parents)
-            #     children = most_general(dag, children)
-            #
-            #     dag.add_edges_from(zip(repeat(sig), parents))
-            #     dag.add_edges_from(zip(children, repeat(sig)))
-            #     dag.remove_edges_from(product(children, parents))
-            #
-            #     self.bottoms.difference_update(parents)
-            #     if not children:
-            #         self.bottoms.add(sig)
-            #     self.tops.difference_update(children)
-            #     if not parents:
-            #         self.tops.add(sig)
-            #
-            # dag.add_node(sig, order=order)
-            pass
-
+        if debug:
+            print("Registering function {} for signature {}".format(f, sig))
         self.funcs[sig] = f
         return self
-
-    # @property
-    # def bottoms(self):
-    #     leaves = self._bottoms
-    #     if leaves is None:
-    #         self._bottoms = leaves = set(bottoms(self.dag))
-    #     return leaves
-    #
-    # @property
-    # def tops(self):
-    #     leaves = self._tops
-    #     if leaves is None:
-    #         self._tops = leaves = set(tops(self.dag))
-    #     return leaves
 
     def resolve(self, sig, *, debug: bool=False):
         if debug:
@@ -247,48 +166,14 @@ class GenericTypeLevelDispatch:
             print("Found signature {} in {}._cache".format(sig, self.__name__))
         return f
 
-    def _resolve_iter(self, sig, reverse=False, memo=None, debug=DEBUG, depth_first=False):
-        # if reverse:
-        #     dag = reverse_view(self.dag)
-        #     initial = self.tops
-        #     edge_predicate = generalizes
-        # else:
-        #     dag = self.dag
-        #     initial = self.bottoms
-        #     edge_predicate = refines
-        # >>>>>
-        edge_predicate = refines
-
-        if debug:
-            edge_predicate = verbose_call(edge_predicate)
-
-        return (s for s in self.funcs if refines(sig, s))
-
-        # if memo is None:
-        #     memo = set()
-        #
-        # roots = (s for s in initial if len(s) == len(sig))
-        # if depth_first:
-        #     for extrema in roots:
-        #         yield from _depth_first(dag, extrema, sig, memo, edge_predicate)
-        # else:
-        #     yield from _breadth_first(dag, deque(roots), sig, memo, edge_predicate)
+    def _resolve_iter(self, sig, debug=DEBUG):
+        edge_predicate = verbose_call(refines) if debug else refines
+        return (s for s in self.funcs if edge_predicate(sig, s))
 
     def _most_specific(self, nodes: List[Signature], sig: Signature) -> Signature:
         if len(nodes) == 0:
             raise UnknownSignature(self, sig)
         elif len(nodes) > 1:
-            # g = DiGraph()
-            # g.add_nodes_from(nodes)
-            # for edge in combinations(nodes, 2):
-            #     if refines(*edge):
-            #         g.add_edge(*edge)
-            #     elif refines(*reversed(edge)):
-            #         g.add_edge(edge[1], edge[0])
-            #
-            # best = most_specific(g)
-
-            # >>>>>>
             refined = set()
             for s1, s2 in combinations(nodes, 2):
                 if refines(s1, s2):
@@ -377,19 +262,11 @@ class GenericTypeLevelDispatch:
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        # funcs, dag, cache, sig_cache, bot, top = (state.pop(attr) for attr in
-        #                                           ["funcs", "dag", "_cache", "_sig_cache", "_bottoms", "_tops"])
         funcs, cache, sig_cache = (state.pop(attr) for attr in
                                    ["funcs", "_cache", "_sig_cache"])
 
         funcs, cache = (_deconstruct_mapping(m) for m in (funcs, cache))
-        # bot, top = (_deconstruct_collection(c) for c in (bot, top))
         sig_cache = _deconstruct_mapping(sig_cache, values=True)
-        # dag = transitive_reduction(dag)
-        # edges = [(_deconstruct_signature(t1), _deconstruct_signature(t2)) for t1, t2 in dag.edges]
-        # nodes = [(_deconstruct_signature(t), data) for t, data in dag.nodes(data=True)]
-        # state["funcs"], state["dag"], state["_cache"], state["_sig_cache"], state["_bottoms"], state["_tops"] = \
-        #     funcs, (nodes, edges), cache, sig_cache, bot, top
         state["funcs"], state["_cache"], state["_sig_cache"] = funcs, cache, sig_cache
         return state
 
@@ -397,10 +274,6 @@ class GenericTypeLevelDispatch:
         funcs, cache, sig_cache = (state.pop(attr) for attr in ["funcs", "_cache", "_sig_cache"])
         state["funcs"], state["_cache"] = (_reconstruct_mapping(m) for m in (funcs, cache))
         state["_sig_cache"] = _reconstruct_mapping(sig_cache, values=True)
-        # state["_bottoms"], state["_tops"] = (_reconstruct_collection(c, set) for c in (bot, top))
-        # dag = DiGraph((_reconstruct_signature(t1), _reconstruct_signature(t2)) for t1, t2 in edges)
-        # dag.add_nodes_from((_reconstruct_signature(t), data) for t, data in nodes)
-        # state["dag"] = dag
         self.__dict__.update(state)
 
     def __call__(self, *types, **kwargs):
