@@ -3,7 +3,6 @@ from typing import Generic
 import collections
 from functools import partial
 from inspect import Parameter
-from .callables import UnStarred
 from .wrappers import cached_getter
 from .imports import import_type
 from .utils import identity

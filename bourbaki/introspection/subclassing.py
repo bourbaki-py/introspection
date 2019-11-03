@@ -2,7 +2,6 @@
 from types import MethodType
 from functools import update_wrapper
 from inspect import signature, Signature, Parameter
-from .simple_repr import simple_repr_init
 from .callables import bind_verbosely, validate_overrides, merged_signature
 
 
