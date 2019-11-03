@@ -1,5 +1,4 @@
 # coding:utf-8
-# TODO: callable signature checks
 import typing
 from inspect import signature, Parameter
 import operator

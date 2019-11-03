@@ -2,7 +2,6 @@
 from inspect import signature, Parameter
 from functools import wraps, update_wrapper, lru_cache
 import dask
-from .debug import _trace as trace
 from .callables import bind, call_with, name_of
 
 empty = Parameter.empty
