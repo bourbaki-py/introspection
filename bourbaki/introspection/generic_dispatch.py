@@ -1,11 +1,8 @@
 # coding:utf-8
 from typing import List, Tuple, Deque, Iterable, Callable, Dict, Type, Union, Optional, Generic
 import re
-from collections import defaultdict
 from tempfile import mktemp
-from itertools import repeat, chain, product, combinations, filterfalse
-from graphviz import Digraph as Dot
-from networkx import DiGraph, induced_subgraph, transitive_reduction, neighbors, reverse_view
+from itertools import chain, combinations, filterfalse
 from .debug import DEBUG
 from .wrappers import const
 from .utils import name_of
@@ -41,24 +38,24 @@ def generalizes(sig1: Signature, sig2: Signature) -> bool:
     return len(sig1) == len(sig2) and all(issubclass_generic(t2, t1) for t1, t2 in zip(sig1, sig2))
 
 
-def bottoms(d: DiGraph):
-    return [n for n, deg in d.in_degree() if deg == 0]
-
-
-def tops(d: DiGraph):
-    return [n for n, deg in d.out_degree() if deg == 0]
-
-
-def most_specific(d: DiGraph, sigs: Optional[List[Signature]]=None):
-    if sigs is not None:
-        d = induced_subgraph(d, sigs)
-    return bottoms(d)
-
-
-def most_general(d: DiGraph, sigs: Optional[List[Signature]]=None):
-    if sigs is not None:
-        d = induced_subgraph(d, sigs)
-    return tops(d)
+# def bottoms(d: DiGraph):
+#     return [n for n, deg in d.in_degree() if deg == 0]
+#
+#
+# def tops(d: DiGraph):
+#     return [n for n, deg in d.out_degree() if deg == 0]
+#
+#
+# def most_specific(d: DiGraph, sigs: Optional[List[Signature]]=None):
+#     if sigs is not None:
+#         d = induced_subgraph(d, sigs)
+#     return bottoms(d)
+#
+#
+# def most_general(d: DiGraph, sigs: Optional[List[Signature]]=None):
+#     if sigs is not None:
+#         d = induced_subgraph(d, sigs)
+#     return tops(d)
 
 
 def verbose_call(f):
@@ -77,28 +74,28 @@ def type_str(t):
     return re.sub(r'\btyping\.\b', '', str(t))
 
 
-def _depth_first(dag: DiGraph, root: Signature, sig: Signature, memo: set,
-                 edge_predicate: Callable[[Signature, Signature], bool]=refines) -> Iterable[Signature]:
-    for node in filterfalse(memo.__contains__, chain((root,), neighbors(dag, root))):
-        memo.add(node)
-        if edge_predicate(sig, node):
-            yield node
-            memo.update(dag.successors(node))
-        else:
-            yield from _depth_first(dag, node, sig, memo, edge_predicate)
-
-
-def _breadth_first(dag: DiGraph, roots: Deque[Signature], sig: Signature, memo: set,
-                   edge_predicate: Callable[[Signature, Signature], bool]=refines) -> Iterable[Signature]:
-    while roots:
-        node = roots.popleft()
-        if node not in memo:
-            memo.add(node)
-            if edge_predicate(sig, node):
-                yield node
-                memo.update(dag.successors(node))
-            else:
-                roots.extend(neighbors(dag, node))
+# def _depth_first(dag: DiGraph, root: Signature, sig: Signature, memo: set,
+#                  edge_predicate: Callable[[Signature, Signature], bool]=refines) -> Iterable[Signature]:
+#     for node in filterfalse(memo.__contains__, chain((root,), neighbors(dag, root))):
+#         memo.add(node)
+#         if edge_predicate(sig, node):
+#             yield node
+#             memo.update(dag.successors(node))
+#         else:
+#             yield from _depth_first(dag, node, sig, memo, edge_predicate)
+#
+#
+# def _breadth_first(dag: DiGraph, roots: Deque[Signature], sig: Signature, memo: set,
+#                    edge_predicate: Callable[[Signature, Signature], bool]=refines) -> Iterable[Signature]:
+#     while roots:
+#         node = roots.popleft()
+#         if node not in memo:
+#             memo.add(node)
+#             if edge_predicate(sig, node):
+#                 yield node
+#                 memo.update(dag.successors(node))
+#             else:
+#                 roots.extend(neighbors(dag, node))
 
 
 def _deconstruct_signature(sig):
@@ -315,6 +312,12 @@ class GenericTypeLevelDispatch:
 
     def visualize(self, target_sig=None, view=True, path=None, debug=False, title: Optional[str]=None, format_="svg",
                   highlight_color="green", highlight_color_error="red", highlight_style="filled"):
+        try:
+            from graphviz import Digraph as Dot
+            from networkx import DiGraph, induced_subgraph, transitive_reduction, neighbors
+        except ImportError:
+            raise ImportError("the visualize method requires graphviz and networkx>=2.0")
+
         if path is None:
             path = mktemp(suffix='-{}.gv'.format(self.__name__))
 
@@ -361,6 +364,10 @@ class GenericTypeLevelDispatch:
         return d
 
     def dag(self):
+        try:
+            from networkx import DiGraph, transitive_reduction
+        except ImportError:
+            raise ImportError("the dag method requires networkx>=2.0")
         dag = DiGraph()
         for order, node in enumerate(self.funcs):
             dag.add_node(node, order=order)
