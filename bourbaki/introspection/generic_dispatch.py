@@ -1,7 +1,7 @@
 # coding:utf-8
 from typing import List, Tuple, Deque, Iterable, Callable, Dict, Type, Union, Optional, Generic
 import re
-from collections import deque
+from collections import defaultdict
 from tempfile import mktemp
 from itertools import repeat, chain, product, combinations, filterfalse
 from graphviz import Digraph as Dot
@@ -137,7 +137,7 @@ class GenericTypeLevelDispatch:
         self.name = self.__name__ = name
         self._cache = {}
         self._sig_cache = {}
-        self.dag = DiGraph()
+        # self.dag = DiGraph()
         self.funcs = {}
         if isolated_bases:
             self.isolated_bases = set(t if isinstance(t, tuple) else (t,) for t in isolated_bases)
@@ -188,45 +188,46 @@ class GenericTypeLevelDispatch:
 
     def insert(self, sig, f, *, debug=DEBUG):
         if sig not in self.funcs:
-            dag = self.dag
-            order = len(dag)
-
-            if len(dag) > 0:
-                parents = list(self._resolve_iter(sig, debug=debug))
-                children = list(self._resolve_iter(sig, reverse=True, debug=debug))
-
-                parents = most_specific(dag, parents)
-                children = most_general(dag, children)
-
-                dag.add_edges_from(zip(repeat(sig), parents))
-                dag.add_edges_from(zip(children, repeat(sig)))
-                dag.remove_edges_from(product(children, parents))
-
-                self.bottoms.difference_update(parents)
-                if not children:
-                    self.bottoms.add(sig)
-                self.tops.difference_update(children)
-                if not parents:
-                    self.tops.add(sig)
-
-            dag.add_node(sig, order=order)
+            # dag = self.dag
+            # order = len(dag)
+            #
+            # if len(dag) > 0:
+            #     parents = list(self._resolve_iter(sig, debug=debug))
+            #     children = list(self._resolve_iter(sig, reverse=True, debug=debug))
+            #
+            #     parents = most_specific(dag, parents)
+            #     children = most_general(dag, children)
+            #
+            #     dag.add_edges_from(zip(repeat(sig), parents))
+            #     dag.add_edges_from(zip(children, repeat(sig)))
+            #     dag.remove_edges_from(product(children, parents))
+            #
+            #     self.bottoms.difference_update(parents)
+            #     if not children:
+            #         self.bottoms.add(sig)
+            #     self.tops.difference_update(children)
+            #     if not parents:
+            #         self.tops.add(sig)
+            #
+            # dag.add_node(sig, order=order)
+            pass
 
         self.funcs[sig] = f
         return self
 
-    @property
-    def bottoms(self):
-        leaves = self._bottoms
-        if leaves is None:
-            self._bottoms = leaves = set(bottoms(self.dag))
-        return leaves
-
-    @property
-    def tops(self):
-        leaves = self._tops
-        if leaves is None:
-            self._tops = leaves = set(tops(self.dag))
-        return leaves
+    # @property
+    # def bottoms(self):
+    #     leaves = self._bottoms
+    #     if leaves is None:
+    #         self._bottoms = leaves = set(bottoms(self.dag))
+    #     return leaves
+    #
+    # @property
+    # def tops(self):
+    #     leaves = self._tops
+    #     if leaves is None:
+    #         self._tops = leaves = set(tops(self.dag))
+    #     return leaves
 
     def resolve(self, sig, *, debug: bool=False):
         if debug:
@@ -250,41 +251,55 @@ class GenericTypeLevelDispatch:
         return f
 
     def _resolve_iter(self, sig, reverse=False, memo=None, debug=DEBUG, depth_first=False):
-        if reverse:
-            dag = reverse_view(self.dag)
-            initial = self.tops
-            edge_predicate = generalizes
-        else:
-            dag = self.dag
-            initial = self.bottoms
-            edge_predicate = refines
+        # if reverse:
+        #     dag = reverse_view(self.dag)
+        #     initial = self.tops
+        #     edge_predicate = generalizes
+        # else:
+        #     dag = self.dag
+        #     initial = self.bottoms
+        #     edge_predicate = refines
+        # >>>>>
+        edge_predicate = refines
 
         if debug:
             edge_predicate = verbose_call(edge_predicate)
 
-        if memo is None:
-            memo = set()
+        return (s for s in self.funcs if refines(sig, s))
 
-        roots = (s for s in initial if len(s) == len(sig))
-        if depth_first:
-            for extrema in roots:
-                yield from _depth_first(dag, extrema, sig, memo, edge_predicate)
-        else:
-            yield from _breadth_first(dag, deque(roots), sig, memo, edge_predicate)
+        # if memo is None:
+        #     memo = set()
+        #
+        # roots = (s for s in initial if len(s) == len(sig))
+        # if depth_first:
+        #     for extrema in roots:
+        #         yield from _depth_first(dag, extrema, sig, memo, edge_predicate)
+        # else:
+        #     yield from _breadth_first(dag, deque(roots), sig, memo, edge_predicate)
 
     def _most_specific(self, nodes: List[Signature], sig: Signature) -> Signature:
         if len(nodes) == 0:
             raise UnknownSignature(self, sig)
         elif len(nodes) > 1:
-            g = DiGraph()
-            g.add_nodes_from(nodes)
-            for edge in combinations(nodes, 2):
-                if refines(*edge):
-                    g.add_edge(*edge)
-                elif refines(*reversed(edge)):
-                    g.add_edge(edge[1], edge[0])
+            # g = DiGraph()
+            # g.add_nodes_from(nodes)
+            # for edge in combinations(nodes, 2):
+            #     if refines(*edge):
+            #         g.add_edge(*edge)
+            #     elif refines(*reversed(edge)):
+            #         g.add_edge(edge[1], edge[0])
+            #
+            # best = most_specific(g)
 
-            best = most_specific(g)
+            # >>>>>>
+            refined = set()
+            for s1, s2 in combinations(nodes, 2):
+                if refines(s1, s2):
+                    refined.add(s2)
+                elif refines(s2, s1):
+                    refined.add(s1)
+
+            best = [node for node in nodes if node not in refined]
 
             if self.isolated_bases:
                 best_ = self.isolated_bases.intersection(best)
@@ -310,7 +325,10 @@ class GenericTypeLevelDispatch:
         d = Dot(self.__name__, format=format_)
         d.attr(label=title)
         # don't remove edges in debug mode
-        dag = self.dag if debug else transitive_reduction(self.dag)
+        # dag = self.dag if debug else transitive_reduction(self.dag)
+
+        # >>>>>>
+        dag = self.dag()
         d.edges((str(b), str(a)) for a, b in dag.edges)
 
         if target_sig is not None:
@@ -342,26 +360,41 @@ class GenericTypeLevelDispatch:
             d.render(path, view=view, cleanup=True)
         return d
 
-    def cleanup(self, clear_cache=False):
-        dag = transitive_reduction(self.dag)
-        dag.add_nodes_from(self.dag.nodes(data=True))
-        self.dag = dag
-        if clear_cache:
-            self._cache.clear()
-        return self
+    def dag(self):
+        dag = DiGraph()
+        for order, node in enumerate(self.funcs):
+            dag.add_node(node, order=order)
+        for sig1, sig2 in combinations(self.funcs, 2):
+            if refines(sig1, sig2):
+                dag.add_edge(sig1, sig2)
+            elif refines(sig2, sig1):
+                dag.add_edge(sig2, sig1)
+        return transitive_reduction(dag)
+
+    # def cleanup(self, clear_cache=False):
+    #     dag = transitive_reduction(self.dag)
+    #     dag.add_nodes_from(self.dag.nodes(data=True))
+    #     self.dag = dag
+    #     if clear_cache:
+    #         self._cache.clear()
+    #     return self
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        funcs, dag, cache, sig_cache, bot, top = (state.pop(attr) for attr in
-                                                  ["funcs", "dag", "_cache", "_sig_cache", "_bottoms", "_tops"])
+        # funcs, dag, cache, sig_cache, bot, top = (state.pop(attr) for attr in
+        #                                           ["funcs", "dag", "_cache", "_sig_cache", "_bottoms", "_tops"])
+        funcs, cache, sig_cache = (state.pop(attr) for attr in
+                                   ["funcs", "_cache", "_sig_cache"])
+
         funcs, cache = (_deconstruct_mapping(m) for m in (funcs, cache))
-        bot, top = (_deconstruct_collection(c) for c in (bot, top))
+        # bot, top = (_deconstruct_collection(c) for c in (bot, top))
         sig_cache = _deconstruct_mapping(sig_cache, values=True)
-        dag = transitive_reduction(dag)
-        edges = [(_deconstruct_signature(t1), _deconstruct_signature(t2)) for t1, t2 in dag.edges]
-        nodes = [(_deconstruct_signature(t), data) for t, data in dag.nodes(data=True)]
-        state["funcs"], state["dag"], state["_cache"], state["_sig_cache"], state["_bottoms"], state["_tops"] = \
-            funcs, (nodes, edges), cache, sig_cache, bot, top
+        # dag = transitive_reduction(dag)
+        # edges = [(_deconstruct_signature(t1), _deconstruct_signature(t2)) for t1, t2 in dag.edges]
+        # nodes = [(_deconstruct_signature(t), data) for t, data in dag.nodes(data=True)]
+        # state["funcs"], state["dag"], state["_cache"], state["_sig_cache"], state["_bottoms"], state["_tops"] = \
+        #     funcs, (nodes, edges), cache, sig_cache, bot, top
+        state["funcs"], state["_cache"], state["_sig_cache"] = funcs, cache, sig_cache
         return state
 
     def __setstate__(self, state):
@@ -369,10 +402,10 @@ class GenericTypeLevelDispatch:
             state.pop(attr) for attr in ["funcs", "dag", "_cache", "_sig_cache", "_bottoms", "_tops"])
         state["funcs"], state["_cache"] = (_reconstruct_mapping(m) for m in (funcs, cache))
         state["_sig_cache"] = _reconstruct_mapping(sig_cache, values=True)
-        state["_bottoms"], state["_tops"] = (_reconstruct_collection(c, set) for c in (bot, top))
-        dag = DiGraph((_reconstruct_signature(t1), _reconstruct_signature(t2)) for t1, t2 in edges)
-        dag.add_nodes_from((_reconstruct_signature(t), data) for t, data in nodes)
-        state["dag"] = dag
+        # state["_bottoms"], state["_tops"] = (_reconstruct_collection(c, set) for c in (bot, top))
+        # dag = DiGraph((_reconstruct_signature(t1), _reconstruct_signature(t2)) for t1, t2 in edges)
+        # dag.add_nodes_from((_reconstruct_signature(t), data) for t, data in nodes)
+        # state["dag"] = dag
         self.__dict__.update(state)
 
     def __call__(self, *types, **kwargs):
