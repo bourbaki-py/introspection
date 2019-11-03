@@ -12,11 +12,6 @@ from .types import (issubclass_generic, deconstruct_generic, reconstruct_generic
 Signature = Tuple[type, ...]
 
 
-class AmbiguousSignatureError(TypeError):
-    def __str__(self):
-        return "The signatures {} are ambiguous".format(self.args)
-
-
 class UnknownSignature(TypeError, NotImplementedError):
     def __str__(self):
         dispatcher, sig = self.args
