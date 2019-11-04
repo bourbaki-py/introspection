@@ -7,5 +7,5 @@ from .inspection import is_top_type, is_callable_origin, is_tuple_origin, is_con
 from .evaluation import deconstruct_generic, reconstruct_generic, eval_type_tree, reparameterize_generic, constraint_type
 from .evaluation import eval_forward_refs, concretize_typevars, fully_concretize_type, constraint_type, get_param_dict
 from .issubclass_generic_ import issubclass_generic, reparameterized_bases
-from .abcs import Builtin, BuiltinAtomic, LazyType, NamedTupleABC
+from .abcs import Builtin, BuiltinAtomic, LazyType, NamedTupleABC, PseudoGenericMeta
 from .abcs import NonStrCollection, NonStrSequence, NonAnyStrCollection, NonAnyStrSequence, NonCollection, NonStdLib

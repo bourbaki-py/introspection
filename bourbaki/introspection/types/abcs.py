@@ -120,3 +120,11 @@ class NamedTupleABCMeta(_InstanceCheckFromSubclassCheck):
 
 class NamedTupleABC(tuple, metaclass=NamedTupleABCMeta):
     pass
+
+
+# for use in creating custom metaclasses that behave like typing.Generic with __getitem__, but without having to deal
+# with the intricacies of the typing module
+
+class PseudoGenericMeta(type):
+    __origin__ = None
+    __args__ = None

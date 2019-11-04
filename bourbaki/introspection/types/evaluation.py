@@ -6,7 +6,7 @@ from itertools import repeat
 from typing_inspect import get_constraints, get_bound
 from .compat import get_generic_origin, get_generic_params, EVALUATE_DEFAULT
 from .compat import ForwardRef, CallableSignature
-from .abcs import LazyType
+from .abcs import LazyType, PseudoGenericMeta
 from ..debug import trace
 from .inspection import (is_callable_origin, is_top_type, is_newtype, get_generic_args, normalized_origin_args,
                          is_named_tuple_class)
@@ -186,6 +186,8 @@ def concretize_typevars_signature(sig: CallableSignature, dont_recurse=()):
 def deconstruct_generic(t):
     if isinstance(t, TypeVar):
         return t
+    if isinstance(t, PseudoGenericMeta):
+        return (t.__origin__, *t.__args__)
     if is_newtype(t):
         id_ = id(t)
         _newtype_cache[id_] = t
