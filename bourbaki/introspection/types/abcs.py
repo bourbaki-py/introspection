@@ -128,3 +128,6 @@ class NamedTupleABC(tuple, metaclass=NamedTupleABCMeta):
 class PseudoGenericMeta(type):
     __origin__ = None
     __args__ = None
+
+    def __getitem__(self, item):
+        raise NotImplementedError("Subclasses of PseudoGenericMeta must implement __getitem__")

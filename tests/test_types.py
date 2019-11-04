@@ -4,13 +4,29 @@ from typing import Pattern, Match, ChainMap, Counter, TypeVar
 import pytest
 import collections
 from collections import abc as collections_abc
+import functools
 from numbers import Number, Integral, Real
 from itertools import repeat, chain, product, combinations
+from bourbaki.introspection.types import deconstruct_generic, reconstruct_generic
 from bourbaki.introspection.types import (issubclass_generic, get_generic_params, deconstruct_generic,
                                           reconstruct_generic, get_constructor_for, eval_forward_refs,
                                           constraint_type, LazyType, Builtin, BuiltinAtomic, NonStdLib,
                                           NonStrCollection, NonAnyStrCollection, NonStrSequence, NonAnyStrSequence,
-                                          NonCollection, NamedTupleABC)
+                                          NonCollection, NamedTupleABC, PseudoGenericMeta)
+
+
+class KindaGenericMeta(PseudoGenericMeta):
+    @functools.lru_cache(None)
+    def __getitem__(cls, args):
+        if not isinstance(args, tuple):
+            args = (args,)
+        mcs = type(cls)
+        return type.__new__(mcs, cls.__name__, (cls,), dict(__args__=args, __origin__=cls))
+
+
+class KindaGeneric(metaclass=KindaGenericMeta):
+    pass
+
 
 T_co = TypeVar("T", covariant=True)
 K = TypeVar("K")
@@ -290,3 +306,17 @@ def test_abc_has_subclass(abc, cls):
 ])
 def test_abc_does_not_have_subclass(abc, cls):
     assert not issubclass(cls, abc)
+
+
+@pytest.mark.parametrize("args", [
+    (1, 2, 3),
+    "foobar",
+    True,
+    int,
+    (List, Tuple),
+])
+def test_custom_metaclass_deconstructible(args):
+    t = KindaGeneric[args]
+    decons = deconstruct_generic(t)
+    recons = reconstruct_generic(decons)
+    assert recons is t
