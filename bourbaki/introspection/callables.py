@@ -10,6 +10,7 @@ from itertools import chain
 from operator import itemgetter
 from types import MappingProxyType
 from multipledispatch import dispatch
+from typing_inspect import is_generic_type
 from .types import get_generic_params, fully_concretize_type
 from .classes import most_specific_constructor
 from .utils import nice_exc_args, is_prefix, is_suffix, name_of, signature
@@ -92,6 +93,14 @@ def function_classpath(f):
     return f.__qualname__ if mod == "builtins" else "{}.{}".format(mod, funcname(f, qualified=True))
 
 
+def constructor_signature(t: Union[type, Callable]):
+    if is_generic_type(t):
+        cons = most_specific_constructor(t)
+        return to_bound_method_signature(signature(cons))
+    else:
+        return signature(t)
+
+
 @singledispatch
 def get_globals(obj) -> Mapping[str, Any]:
     # handles FunctionType, ModuleType
@@ -104,7 +113,7 @@ def get_globals(obj) -> Mapping[str, Any]:
 def get_globals_wrapped(obj):
     w = getattr(obj, "__wrapped__", None)
     if w is None:
-        return w
+        return None
     return get_globals(w)
 
 
@@ -133,7 +142,8 @@ def fully_concrete_signature(f: Callable, from_method: bool = False, tvar_map: O
 def _fully_concrete_signature(f: Callable, from_method: bool = False, tvar_map: Optional[Tuple] = None):
     if tvar_map is not None:
         tvar_map = dict(tvar_map)
-    sig = signature(f)
+    # handles classes and functions
+    sig = constructor_signature(f)
     if from_method:
         sig = to_bound_method_signature(sig)
     globals_ = get_globals(f)
