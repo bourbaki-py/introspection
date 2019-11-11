@@ -68,8 +68,6 @@ def most_specific_constructor(t: type, return_class=False):
     # first class in mro, preferring __new__ over __init__
     # note that this is different than getattr(t, "__new__", getattr(t, "__init__)),
     # since t.__new__ is usually higher up in the mro, e.g. object.__new__
-    # if NEW_TYPING and isinstance(t, _GenericAlias) and "__origin__" in t.__dict__:
-    #     t = t.__origin__
     t = get_generic_origin(t)
     tups = [(c, "__new__" in c.__dict__, "__init__" in c.__dict__) for c in getmro(t)]
     cls, new, init = next(tup for tup in tups if (tup[1] or tup[2]))
