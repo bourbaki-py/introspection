@@ -7,14 +7,17 @@ from warnings import warn
 from .utils import name_of
 from .imports import import_type
 from .types import (LazyType, is_top_type, to_concrete_type, constraint_type, issubclass_generic,
-                    reconstruct_generic, deconstruct_generic, get_generic_args, typetypes)
+                    reconstruct_generic, deconstruct_generic, get_generic_args, typetypes, base_newtype_of)
 from .generic_dispatch import GenericTypeLevelSingleDispatch, const
 from .generic_dispatch_helpers import UnionWrapper, TupleWrapper, CollectionWrapper, MappingWrapper, LazyWrapper
 
 
 type_checker = GenericTypeLevelSingleDispatch("type_checker", isolated_bases=[typing.Union])
 
-type_checker_for = lru_cache(None)(type_checker)
+
+@lru_cache(None)
+def type_checker_for(type_):
+    return type_checker(base_newtype_of(type_))
 
 
 def isinstance_generic(obj, type_):
