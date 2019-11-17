@@ -12,4 +12,4 @@ from .typechecking import type_checker
 from .types import issubclass_generic
 from .wrappers import ArgPreparer, cached_getter, lru_cache_sig_preserving
 
-__version__ = '0.3.2'
+__version__ = '0.3.3'
