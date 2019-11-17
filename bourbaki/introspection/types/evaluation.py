@@ -84,6 +84,8 @@ def _eval_type_tree(tup):
         return t
     if t is NewType:
         return _cached_newtype(*tup)
+    if is_newtype(t):
+        return t
     if is_named_tuple_class(t):
         return t
     if is_callable_origin(t):
@@ -157,16 +159,16 @@ def concretize_typevars(t: type, dont_recurse=()):
             # don't parameterize with nonspecific parameters
             return t
     else:
-        try:
-            args_ = tuple(concretize_typevars(t_, (t, *dont_recurse)) for t_ in args)
-        except:
-            print(org, args)
-            raise
+        args_ = tuple(concretize_typevars(t_, (t, *dont_recurse)) for t_ in args)
 
     if is_named_tuple_class(org):
         return new_namedtuple_subclass(org, args_)
 
-    return org[args_]
+    try:
+        return org[args_]
+    except:
+        # newtypes
+        return (org, *args_)
 
 
 @concretize_typevars.register(TypeVar)

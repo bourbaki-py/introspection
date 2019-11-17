@@ -1,6 +1,7 @@
 # coding: utf-8
 from typing import Generic, Tuple, TypeVar, Union
 import typing
+import sys
 from functools import lru_cache
 from inspect import getmro
 from itertools import repeat
@@ -19,6 +20,9 @@ def reparameterized_bases(t, recurse=True, evaluate=EVALUATE_DEFAULT, concretize
     if memo is None:
         memo = set()
 
+    if concretize and args:
+        args = tuple(map(concretize_typevars, args))
+
     if args:
         if is_tuple_origin(org):
             if args:
@@ -35,12 +39,8 @@ def reparameterized_bases(t, recurse=True, evaluate=EVALUATE_DEFAULT, concretize
                 yield base
             yield from reparameterized_bases(base, recurse=recurse, evaluate=evaluate, concretize=concretize, memo=memo)
         else:
-            if concretize:
-                args = tuple(map(concretize_typevars, args))
             tvar_map = dict(zip(params, args))
             for base in bases:
-                # if base in memo:
-                #     continue
                 new_base = reparameterize_generic(base, tvar_map, evaluate=evaluate)
                 if new_base in memo:
                     continue
@@ -143,7 +143,7 @@ def _issubclass(t1, t2):
     try:
         return issubclass(to_concrete_type(t1), t2)
     except Exception as e:
-        print("_issubclass({}, {}) -> {}".format(t1, t2, e))
+        print("_issubclass({}, {}) -> {}".format(t1, t2, e), file=sys.stderr)
         raise e
 
 
@@ -180,7 +180,7 @@ def _issubclass_parameterized_general(org1, args1, org2, args2):
 
     ttup1, ttup2 = (org1, *args1), (org2, *args2)
     return (_issubclass(org1, org2) and any(issubclass_generic(base, ttup2)
-                                            for base in reparameterized_bases(ttup1, evaluate=EVALUATE_DEFAULT)))
+                                            for base in reparameterized_bases(ttup1, concretize=True)))
 
 
 @trace
