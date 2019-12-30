@@ -1,10 +1,10 @@
-#coding:utf-8
+# coding:utf-8
 from inspect import signature
 from functools import lru_cache
 
-py_name_re = r'[_a-zA-Z][_a-zA-Z0-9]*'
+py_name_re = r"[_a-zA-Z][_a-zA-Z0-9]*"
 
-py_dot_name_re = r'{name}(?:\.{name})*'.format(name=py_name_re)
+py_dot_name_re = r"{name}(?:\.{name})*".format(name=py_name_re)
 
 # this could get call a lot but not on very many different functions; the memory use is worth it
 signature = lru_cache(None)(signature)
@@ -32,7 +32,7 @@ def nice_exc_args(exc):
     else:
         args = exc
     if len(args) == 0:
-        return ''
+        return ""
     elif len(args) == 1:
         return args[0]
     else:
@@ -40,8 +40,8 @@ def nice_exc_args(exc):
 
 
 def is_prefix(x1, x2):
-    return x1 == x2[:len(x1)]
+    return x1 == x2[: len(x1)]
 
 
 def is_suffix(x1, x2):
-    return x1 == x2[len(x2)-len(x1):]
+    return x1 == x2[len(x2) - len(x1) :]

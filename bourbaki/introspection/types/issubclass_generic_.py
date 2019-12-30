@@ -5,9 +5,24 @@ import sys
 from functools import lru_cache
 from inspect import getmro
 from itertools import repeat
-from .inspection import (is_tuple_origin, is_top_type, is_callable_origin, is_newtype, base_newtype_of, newtype_chain,
-                         get_generic_args, generic_metadata, normalized_origin_args, is_named_tuple_class)
-from .compat import get_generic_origin, get_generic_params, to_concrete_type, EVALUATE_DEFAULT
+from .inspection import (
+    is_tuple_origin,
+    is_top_type,
+    is_callable_origin,
+    is_newtype,
+    base_newtype_of,
+    newtype_chain,
+    get_generic_args,
+    generic_metadata,
+    normalized_origin_args,
+    is_named_tuple_class,
+)
+from .compat import (
+    get_generic_origin,
+    get_generic_params,
+    to_concrete_type,
+    EVALUATE_DEFAULT,
+)
 from .evaluation import concretize_typevars, reparameterize_generic
 from ..debug import trace
 
@@ -15,7 +30,9 @@ T_co = TypeVar("T_co", covariant=True)
 
 
 @trace
-def reparameterized_bases(t, recurse=True, evaluate=EVALUATE_DEFAULT, concretize=False, memo=None):
+def reparameterized_bases(
+    t, recurse=True, evaluate=EVALUATE_DEFAULT, concretize=False, memo=None
+):
     org, bases, params, args = generic_metadata(t, evaluate=evaluate)
     if memo is None:
         memo = set()
@@ -37,7 +54,13 @@ def reparameterized_bases(t, recurse=True, evaluate=EVALUATE_DEFAULT, concretize
             if base not in memo:
                 memo.add(base)
                 yield base
-            yield from reparameterized_bases(base, recurse=recurse, evaluate=evaluate, concretize=concretize, memo=memo)
+            yield from reparameterized_bases(
+                base,
+                recurse=recurse,
+                evaluate=evaluate,
+                concretize=concretize,
+                memo=memo,
+            )
         else:
             tvar_map = dict(zip(params, args))
             for base in bases:
@@ -47,7 +70,9 @@ def reparameterized_bases(t, recurse=True, evaluate=EVALUATE_DEFAULT, concretize
                 memo.add(new_base)
                 yield new_base
                 if recurse:
-                    yield from reparameterized_bases(new_base, recurse=recurse, evaluate=evaluate, memo=memo)
+                    yield from reparameterized_bases(
+                        new_base, recurse=recurse, evaluate=evaluate, memo=memo
+                    )
     else:
         # no args but there may be generic bases!
         if concretize:
@@ -55,7 +80,9 @@ def reparameterized_bases(t, recurse=True, evaluate=EVALUATE_DEFAULT, concretize
         for base in bases:
             memo.add(base)
             yield base
-            yield from reparameterized_bases(base, recurse=recurse, evaluate=evaluate, concretize=True, memo=memo)
+            yield from reparameterized_bases(
+                base, recurse=recurse, evaluate=evaluate, concretize=True, memo=memo
+            )
 
 
 @lru_cache(None)
@@ -162,13 +189,21 @@ def _issubclass_union_union(types1, types2):
 
 
 def _issubclass_fixlen_fixlen(org1, args1, org2, args2):
-    return (len(args1) == len(args2) and _issubclass(org1, org2)
-            and all(issubclass_generic(t1_, t2_) for t1_, t2_ in zip(args1, args2)))
+    return (
+        len(args1) == len(args2)
+        and _issubclass(org1, org2)
+        and all(issubclass_generic(t1_, t2_) for t1_, t2_ in zip(args1, args2))
+    )
 
 
 def _issubclass_fixlen_any(org1, args1, org2, args2):
-    return (_issubclass(org1, org2) and len(args2) == 1
-            and all(issubclass_generic(t1_, t2_) for t1_, t2_ in zip(args1, repeat(args2[0]))))
+    return (
+        _issubclass(org1, org2)
+        and len(args2) == 1
+        and all(
+            issubclass_generic(t1_, t2_) for t1_, t2_ in zip(args1, repeat(args2[0]))
+        )
+    )
 
 
 @trace
@@ -178,11 +213,16 @@ def _issubclass_parameterized_general(org1, args1, org2, args2):
             return False
         # top type defines the variance relation
         params = (T_co,) if org2 is Tuple else get_generic_params(org2)
-        return all(_issubclass_with_variance(t1, t2, p) for t1, t2, p in zip(args1, args2, params))
+        return all(
+            _issubclass_with_variance(t1, t2, p)
+            for t1, t2, p in zip(args1, args2, params)
+        )
 
     ttup1, ttup2 = (org1, *args1), (org2, *args2)
-    return (_issubclass(org1, org2) and any(issubclass_generic(base, ttup2)
-                                            for base in reparameterized_bases(ttup1, concretize=True)))
+    return _issubclass(org1, org2) and any(
+        issubclass_generic(base, ttup2)
+        for base in reparameterized_bases(ttup1, concretize=True)
+    )
 
 
 @trace
@@ -210,4 +250,6 @@ def _issubclass_callable(args1, args2):
     if len(sig1) != len(sig2):
         return False
     # contravariant in arguments
-    return issubclass_generic(ret1, ret2) and all(issubclass_generic(t2, t1) for (t2, t1) in zip(sig2, sig1))
+    return issubclass_generic(ret1, ret2) and all(
+        issubclass_generic(t2, t1) for (t2, t1) in zip(sig2, sig1)
+    )

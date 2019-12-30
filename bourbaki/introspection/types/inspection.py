@@ -4,8 +4,21 @@ import typing
 from functools import singledispatch, lru_cache
 from collections import abc as collections_abc
 from typing_inspect import get_args
-from .compat import get_generic_origin, get_generic_params, get_generic_bases, typing_bases, generics, _parameterize
-from .compat import _TypeAlias, CallableSignature, EVALUATE_DEFAULT, NON_TYPING_STDLIB_MODULES, NEW_TYPING
+from .compat import (
+    get_generic_origin,
+    get_generic_params,
+    get_generic_bases,
+    typing_bases,
+    generics,
+    _parameterize,
+)
+from .compat import (
+    _TypeAlias,
+    CallableSignature,
+    EVALUATE_DEFAULT,
+    NON_TYPING_STDLIB_MODULES,
+    NEW_TYPING,
+)
 from ..debug import trace
 
 # Note: ideally, get_generic_args would be defined in compat, but we define it here because it requires access to
@@ -36,7 +49,11 @@ def _is_concrete_typevar(t):
 
 
 def is_newtype(t):
-    return callable(t) and hasattr(t, "__supertype__") and getattr(t, "__module__", None) == "typing"
+    return (
+        callable(t)
+        and hasattr(t, "__supertype__")
+        and getattr(t, "__module__", None) == "typing"
+    )
 
 
 def base_newtype_of(t):
@@ -63,10 +80,17 @@ def is_named_tuple_class(cls: type):
         if len(mro) > 2:
             base_nt_cls = mro[-3]
             # custom subclass with overridden initialization
-            if cls.__new__ is not base_nt_cls.__new__ or cls.__init__ is not base_nt_cls.__init__:
+            if (
+                cls.__new__ is not base_nt_cls.__new__
+                or cls.__init__ is not base_nt_cls.__init__
+            ):
                 return False
 
-    return (isinstance(cls, type) and issubclass(cls, tuple) and all(hasattr(cls, a) for a in ("_asdict", "_replace", "_fields")))
+    return (
+        isinstance(cls, type)
+        and issubclass(cls, tuple)
+        and all(hasattr(cls, a) for a in ("_asdict", "_replace", "_fields"))
+    )
 
 
 def get_named_tuple_arg_types(cls: type):
@@ -85,13 +109,16 @@ def get_generic_args(t, evaluate=EVALUATE_DEFAULT):
 
 # Note: the tuple case is registered in evaluation.py to avoid a circular import (requires eval_type_tree)
 
+
 @get_generic_args.register(CallableSignature)
 def _get_generic_args_sig(sig, evaluate=EVALUATE_DEFAULT):
     return ()
 
 
 @get_generic_args.register(_TypeAlias)
-def _get_alias_args(alias, evaluate=EVALUATE_DEFAULT):  # pragma: no cover (python3.6 only, works if tests pass)
+def _get_alias_args(
+    alias, evaluate=EVALUATE_DEFAULT
+):  # pragma: no cover (python3.6 only, works if tests pass)
     arg = alias.type_var
     if isinstance(arg, TypeVar):
         return ()
@@ -100,11 +127,16 @@ def _get_alias_args(alias, evaluate=EVALUATE_DEFAULT):  # pragma: no cover (pyth
 
 # tie all of the attibute-getters together: origin, args, parameters, and bases
 
+
 @trace
 def generic_metadata(t: type, evaluate=EVALUATE_DEFAULT):
     org = get_generic_origin(t)
     args = get_generic_args(t, evaluate=evaluate)
-    bases = tuple(base for base in get_generic_bases(org) if get_generic_origin(base) is not Generic)
+    bases = tuple(
+        base
+        for base in get_generic_bases(org)
+        if get_generic_origin(base) is not Generic
+    )
     if args and NEW_TYPING and getattr(org, "__module__", None) == "typing":
         org = _parameterize(org)
         params = get_generic_params(org)
@@ -115,13 +147,21 @@ def generic_metadata(t: type, evaluate=EVALUATE_DEFAULT):
 
 # get origin, args, and boolean indicating a fixed-length tuple/signature or not where appropriate, in one call
 
-def normalized_origin_args(t, evaluate=EVALUATE_DEFAULT,
-                           remove_tuple_ellipsis=True,
-                           extract_namedtuple_args=False):
+
+def normalized_origin_args(
+    t,
+    evaluate=EVALUATE_DEFAULT,
+    remove_tuple_ellipsis=True,
+    extract_namedtuple_args=False,
+):
     if getattr(t, "__module__", None) in NON_TYPING_STDLIB_MODULES:
         return get_generic_origin(t), (), False
 
-    org, args, fixlen = get_generic_origin(t), get_generic_args(t, evaluate=evaluate), False
+    org, args, fixlen = (
+        get_generic_origin(t),
+        get_generic_args(t, evaluate=evaluate),
+        False,
+    )
 
     if is_tuple_origin(org) and args:
         fixlen = args[-1] is not Ellipsis

@@ -1,5 +1,10 @@
 # coding:utf-8
-from .classes import all_subclasses, classpath, inheritance_hierarchy, render_inheritance_hierarchy
+from .classes import (
+    all_subclasses,
+    classpath,
+    inheritance_hierarchy,
+    render_inheritance_hierarchy,
+)
 from .docstrings import parse_docstring
 from .generic_dispatch import GenericTypeLevelDispatch, GenericTypeLevelSingleDispatch
 from .imports import import_object, lazy_imports
@@ -12,4 +17,4 @@ from .typechecking import type_checker
 from .types import issubclass_generic
 from .wrappers import ArgPreparer, cached_getter, lru_cache_sig_preserving
 
-__version__ = '0.3.4'
+__version__ = "0.3.4"

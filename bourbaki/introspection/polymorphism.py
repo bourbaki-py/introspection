@@ -5,6 +5,7 @@ import collections
 from functools import lru_cache
 from multipledispatch import Dispatcher
 from types import MethodType
+
 Empty = Parameter.empty
 
 
@@ -15,13 +16,17 @@ class UnregisteredType(TypeError, NotImplementedError):
 class UnregisteredGeneric(UnregisteredType):
     def __str__(self):
         dispatcher, type_ = self.args
-        return "Generic type {} has not been registered for dispatcher {}".format(type_, dispatcher)
+        return "Generic type {} has not been registered for dispatcher {}".format(
+            type_, dispatcher
+        )
 
 
 class UnregisteredConcreteType(UnregisteredType):
     def __str__(self):
         dispatcher, type_ = self.args
-        return "Type {} has not been registered for dispatcher {}".format(type_, dispatcher)
+        return "Type {} has not been registered for dispatcher {}".format(
+            type_, dispatcher
+        )
 
 
 class TypeLevelDispatch(Dispatcher):
@@ -58,6 +63,7 @@ class MultipleDispatchMethod(Dispatcher):
 
 Predicate = Callable[[Any], bool]
 
+
 class SingleValueDispatch:
     def __init__(self, name):
         self.name = self.__name__ = name
@@ -70,9 +76,15 @@ class SingleValueDispatch:
 
         return dec
 
-    def register_fork(self, value_mapping: Optional[Mapping[Hashable, Callable]]=None):
+    def register_fork(
+        self, value_mapping: Optional[Mapping[Hashable, Callable]] = None
+    ):
         if not isinstance(value_mapping, collections.Mapping):  # pragma: no cover
-            raise TypeError("value_mapping must be a Mapping instance; got {}".format(type(value_mapping)))
+            raise TypeError(
+                "value_mapping must be a Mapping instance; got {}".format(
+                    type(value_mapping)
+                )
+            )
 
         def dec(predicate: Predicate):
             self._insert(predicate, None, value_mapping)
@@ -80,9 +92,12 @@ class SingleValueDispatch:
 
         return dec
 
-
-    def _insert(self, predicate, f: Optional[Predicate]=None,
-                value_mapping: Optional[Mapping[Hashable, Predicate]]=None):
+    def _insert(
+        self,
+        predicate,
+        f: Optional[Predicate] = None,
+        value_mapping: Optional[Mapping[Hashable, Predicate]] = None,
+    ):
         if not callable(predicate):  # pragma: no cover
             raise TypeError("Predicates must be callable; got {}".format(predicate))
 

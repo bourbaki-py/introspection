@@ -23,6 +23,7 @@ class AttrItemPath(tuple):
     >>> path(o)
     "baz"
     """
+
     def __call__(self, obj):
         for n in self:
             if isinstance(n, Attr):
@@ -32,7 +33,9 @@ class AttrItemPath(tuple):
         return obj
 
     def __str__(self):
-        return ''.join('[{}]'.format(repr(n)) if not isinstance(n, Attr) else str(n) for n in self)
+        return "".join(
+            "[{}]".format(repr(n)) if not isinstance(n, Attr) else str(n) for n in self
+        )
 
     __repr__ = __str__
 
@@ -56,30 +59,90 @@ def call_on(*args, **kwargs):
     return f_
 
 
-def find_refs_by_type(obj, type_, prefix=(), memo=None,
-                      attrs=True, items=True, max_depth=5,
-                      yield_paths=True, yield_objects=False):
-    return find_refs(obj, lambda x: isinstance(x, type_), prefix=prefix, memo=memo, max_depth=max_depth,
-                     attrs=attrs, items=items, yield_paths=yield_paths, yield_objects=yield_objects)
+def find_refs_by_type(
+    obj,
+    type_,
+    prefix=(),
+    memo=None,
+    attrs=True,
+    items=True,
+    max_depth=5,
+    yield_paths=True,
+    yield_objects=False,
+):
+    return find_refs(
+        obj,
+        lambda x: isinstance(x, type_),
+        prefix=prefix,
+        memo=memo,
+        max_depth=max_depth,
+        attrs=attrs,
+        items=items,
+        yield_paths=yield_paths,
+        yield_objects=yield_objects,
+    )
 
 
-def find_refs_by_id(obj, target_obj, prefix=(), memo=None,
-                    attrs=True, items=True, max_depth=5,
-                    yield_paths=True, yield_objects=False):
-    return find_refs(obj, lambda x: x is target_obj, prefix=prefix, memo=memo, max_depth=max_depth,
-                     attrs=attrs, items=items, yield_paths=yield_paths, yield_objects=yield_objects)
+def find_refs_by_id(
+    obj,
+    target_obj,
+    prefix=(),
+    memo=None,
+    attrs=True,
+    items=True,
+    max_depth=5,
+    yield_paths=True,
+    yield_objects=False,
+):
+    return find_refs(
+        obj,
+        lambda x: x is target_obj,
+        prefix=prefix,
+        memo=memo,
+        max_depth=max_depth,
+        attrs=attrs,
+        items=items,
+        yield_paths=yield_paths,
+        yield_objects=yield_objects,
+    )
 
 
-def find_refs_by_size(obj, min_size: int, size_func: Callable[[Any], int]=sys.getsizeof, prefix=(), memo=None,
-                      attrs=True, items=True, max_depth=5,
-                      yield_paths=True, yield_objects=False):
-    return find_refs(obj, lambda x: size_func(x) >= min_size, prefix=prefix, memo=memo, max_depth=max_depth,
-                     attrs=attrs, items=items, yield_paths=yield_paths, yield_objects=yield_objects)
+def find_refs_by_size(
+    obj,
+    min_size: int,
+    size_func: Callable[[Any], int] = sys.getsizeof,
+    prefix=(),
+    memo=None,
+    attrs=True,
+    items=True,
+    max_depth=5,
+    yield_paths=True,
+    yield_objects=False,
+):
+    return find_refs(
+        obj,
+        lambda x: size_func(x) >= min_size,
+        prefix=prefix,
+        memo=memo,
+        max_depth=max_depth,
+        attrs=attrs,
+        items=items,
+        yield_paths=yield_paths,
+        yield_objects=yield_objects,
+    )
 
 
-def find_refs(obj, filter_=None, prefix=(), memo=None,
-              attrs=True, items=True, max_depth=5,
-              yield_paths=True, yield_objects=False):
+def find_refs(
+    obj,
+    filter_=None,
+    prefix=(),
+    memo=None,
+    attrs=True,
+    items=True,
+    max_depth=5,
+    yield_paths=True,
+    yield_objects=False,
+):
     """Find attr/item lookup paths for all objects starting from obj whose referent satisfies the predicate"""
     if max_depth == 0:
         return
@@ -123,5 +186,14 @@ def find_refs(obj, filter_=None, prefix=(), memo=None,
         attrs_ = ()
 
     for n, o in chain(items_, attrs_):
-        yield from find_refs(o, filter_, (*prefix, n), memo, attrs=attrs, items=items, max_depth=max_depth - 1,
-                             yield_paths=yield_paths, yield_objects=yield_objects)
+        yield from find_refs(
+            o,
+            filter_,
+            (*prefix, n),
+            memo,
+            attrs=attrs,
+            items=items,
+            max_depth=max_depth - 1,
+            yield_paths=yield_paths,
+            yield_objects=yield_objects,
+        )

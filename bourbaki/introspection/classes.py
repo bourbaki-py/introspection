@@ -25,11 +25,12 @@ def classpath(t: type):
             t = a
     if t.__module__ in ("builtins", "typing"):
         return get_qualname(t)
-    return '{}.{}'.format(t.__module__, get_qualname(t))
+    return "{}.{}".format(t.__module__, get_qualname(t))
 
 
 if NEW_TYPING:
     from typing import _GenericAlias
+
     # python3.7 new typing module
     classpath = singledispatch(classpath)
 
@@ -42,8 +43,11 @@ if NEW_TYPING:
     def classpath_generic_alias(t: _GenericAlias):
         if t.__module__ == "typing":
             return t._name
-        return '{}.{}'.format(t.__module__, get_qualname(t))
+        return "{}.{}".format(t.__module__, get_qualname(t))
+
+
 else:
+
     def get_qualname(t: type):
         return getattr(t, "__qualname__", get_generic_origin(t).__qualname__)
 
@@ -51,17 +55,17 @@ else:
 def parameterized_classpath(t: type):
     def _inner(t):
         if t is Ellipsis:
-            return '...'
+            return "..."
         if isinstance(t, list):
             # for callables
-            return '[{}]'.format(','.join(map(_inner, t)))
+            return "[{}]".format(",".join(map(_inner, t)))
         return parameterized_classpath(t)
 
     args = get_generic_args(t, evaluate=True)
     origin = get_generic_origin(t)
     if not args:
         return classpath(origin)
-    return "{}[{}]".format(classpath(origin), ','.join(map(_inner, args)))
+    return "{}[{}]".format(classpath(origin), ",".join(map(_inner, args)))
 
 
 def most_specific_constructor(t: type, return_class=False):
@@ -111,5 +115,5 @@ def inheritance_hierarchy(cls):
 def render_inheritance_hierarchy(cls, path=None):
     d = inheritance_hierarchy(cls)
     if path is None:
-        path = mktemp(suffix=classpath(cls) + '.gv')
+        path = mktemp(suffix=classpath(cls) + ".gv")
     d.render(path, view=True, cleanup=True)

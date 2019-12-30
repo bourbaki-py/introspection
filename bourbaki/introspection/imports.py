@@ -38,11 +38,11 @@ def import_object(classpath):
     if classpath == "...":
         return Ellipsis
 
-    names = classpath.split('.')
+    names = classpath.split(".")
 
     i, obj = 0, None
     for i, name in enumerate(names, 1):
-        modpath = '.'.join(names[:i])
+        modpath = ".".join(names[:i])
         try:
             # try to import a module from a qualified path
             obj = import_module(modpath)
@@ -78,8 +78,11 @@ def import_type(parameterized_classpath) -> type:
         t = _eval_type_tree_expr(expr)
 
     if not isinstance(t, (type, typetypes)):
-        raise TypeError("import of {} yielded object of type {}, not a type"
-                        .format(parameterized_classpath, type(t)))
+        raise TypeError(
+            "import of {} yielded object of type {}, not a type".format(
+                parameterized_classpath, type(t)
+            )
+        )
     return t
 
 
@@ -111,12 +114,17 @@ def _to_classpath(node) -> str:
 
 @singledispatch
 def _to_index_expr(node):
-    raise SyntaxError("{} is not a valid index value for the parameters of a parameterized type expression"
-                      .format(node))
+    raise SyntaxError(
+        "{} is not a valid index value for the parameters of a parameterized type expression".format(
+            node
+        )
+    )
 
 
 @_to_typetree_expr.register(ast.Subscript)
-def _to_typetree_expr_subscript(node: ast.Index) -> Tuple[Union[str, Tuple[str, ...]], ...]:
+def _to_typetree_expr_subscript(
+    node: ast.Index
+) -> Tuple[Union[str, Tuple[str, ...]], ...]:
     cp = _to_classpath(node.value)
     index_cps = _to_index_expr(node.slice.value)
     return (cp, *index_cps)
@@ -125,7 +133,7 @@ def _to_typetree_expr_subscript(node: ast.Index) -> Tuple[Union[str, Tuple[str, 
 @_to_classpath.register(ast.Attribute)
 @_to_typetree_expr.register(ast.Attribute)
 def _to_classpath_attr(node: ast.Attribute) -> str:
-    return '.'.join((_to_classpath(node.value), node.attr))
+    return ".".join((_to_classpath(node.value), node.attr))
 
 
 @_to_classpath.register(ast.Name)
@@ -137,12 +145,12 @@ def _to_classpath_name(node: ast.Name) -> str:
 @_to_index_expr.register(ast.Attribute)
 @_to_index_expr.register(ast.Name)
 def _to_index_expr_ref(node: Union[ast.Attribute, ast.Name]) -> Tuple[str, ...]:
-    return _to_classpath(node),
+    return (_to_classpath(node),)
 
 
 @_to_index_expr.register(ast.Ellipsis)
 def _to_index_expr_ellipsis(node: ast.Ellipsis) -> Tuple[str, ...]:
-    return '...',
+    return ("...",)
 
 
 @_to_index_expr.register(ast.Tuple)
@@ -151,8 +159,10 @@ def _to_index_expr_tuple(node: ast.Tuple) -> Tuple[Union[str, Tuple[str, ...]], 
 
 
 @_to_index_expr.register(ast.Subscript)
-def _to_index_expr_subscript(node: ast.Subscript) -> Tuple[Union[str, Tuple[str, ...]], ...]:
-    return _to_typetree_expr(node),
+def _to_index_expr_subscript(
+    node: ast.Subscript
+) -> Tuple[Union[str, Tuple[str, ...]], ...]:
+    return (_to_typetree_expr(node),)
 
 
 def lazy_imports(*modulespecs):
@@ -192,6 +202,7 @@ class import_:
     def as_(self, rename):
         return _ImportSpec(self.modname, as_, rename)
 
+
 # alias
 module_ = import_
 
@@ -216,7 +227,11 @@ class LazyImportsCallable:
         if not callable(func):  # pragma: no cover
             raise TypeError("func must be callable; got {}".format(type(func)))
         if not hasattr(func, "__globals__"):
-            raise AttributeError("func must have a __globals__ attribute; type {} does not".format(type(func)))
+            raise AttributeError(
+                "func must have a __globals__ attribute; type {} does not".format(
+                    type(func)
+                )
+            )
         if isinstance(modulespecs, str):
             modulespecs = (modulespecs,)
 
@@ -248,10 +263,18 @@ def get_globals(callable_):
             mod = import_module(callable_.__module__)
         except ImportError:
             try:
-                f = next(f for f in callable_.__dict__.values() if isinstance(f, FunctionType))
+                f = next(
+                    f
+                    for f in callable_.__dict__.values()
+                    if isinstance(f, FunctionType)
+                )
             except StopIteration:  # pragma: no cover
-                raise AttributeError("cannot extract globals dict from class {} with no locally defined methods "
-                                     "and non-importable module {}".format(callable_, callable_.__module__))
+                raise AttributeError(
+                    "cannot extract globals dict from class {} with no locally defined methods "
+                    "and non-importable module {}".format(
+                        callable_, callable_.__module__
+                    )
+                )
         else:
             return vars(mod)
     else:
@@ -275,8 +298,11 @@ def module_from(module, sourcepath=None):
     :return: the imported module
     """
     module, sourcepath = _classpath_and_dir(module, sourcepath, checkdir=True)
-    logger.debug("Attempting to import module {}{}"
-                 .format(module, "" if sourcepath is None else " locally from {}".format(sourcepath)))
+    logger.debug(
+        "Attempting to import module {}{}".format(
+            module, "" if sourcepath is None else " locally from {}".format(sourcepath)
+        )
+    )
 
     if sourcepath is not None:
         wd = os.getcwd()
@@ -295,8 +321,12 @@ def object_from(classpath, sourcepath=None, subclass_check=None, instance_check=
     affecting sys.path
     """
     classpath, sourcepath = _classpath_and_dir(classpath, sourcepath, checkdir=True)
-    logger.debug("Attempting to import object {}{}"
-                 .format(classpath, "" if sourcepath is None else " locally from {}".format(sourcepath)))
+    logger.debug(
+        "Attempting to import object {}{}".format(
+            classpath,
+            "" if sourcepath is None else " locally from {}".format(sourcepath),
+        )
+    )
 
     if sourcepath is not None:
         wd = os.getcwd()
@@ -307,20 +337,26 @@ def object_from(classpath, sourcepath=None, subclass_check=None, instance_check=
         obj = import_object(classpath)
 
     if subclass_check is not None:
-        assert isinstance(obj, type) and issubclass(obj, subclass_check), "{} is not a subclass of {}"\
-            .format(classpath, subclass_check)
+        assert isinstance(obj, type) and issubclass(
+            obj, subclass_check
+        ), "{} is not a subclass of {}".format(classpath, subclass_check)
     if instance_check is not None:
-        assert isinstance(obj, instance_check), "{} is not an instance of {}"\
-            .format(classpath, instance_check)
+        assert isinstance(obj, instance_check), "{} is not an instance of {}".format(
+            classpath, instance_check
+        )
 
     return obj
 
 
 def _check_instance_type(obj, instance_check=None):
-    assert isinstance(obj, instance_check), "{} is not an instance of {}".format(obj, instance_check)
+    assert isinstance(obj, instance_check), "{} is not an instance of {}".format(
+        obj, instance_check
+    )
 
 
-def _import(module, names=None, asname=None, sourcepath=None, globals_=None, _stack_height=1):
+def _import(
+    module, names=None, asname=None, sourcepath=None, globals_=None, _stack_height=1
+):
     all_ = False
     if isinstance(names, str):
         if names.strip() == ALL:
@@ -334,13 +370,19 @@ def _import(module, names=None, asname=None, sourcepath=None, globals_=None, _st
     else:
         mod = import_module(module)
 
-    globals_ = globals_ if globals_ is not None else stack()[_stack_height].frame.f_globals
+    globals_ = (
+        globals_ if globals_ is not None else stack()[_stack_height].frame.f_globals
+    )
     if names in (None, as_):
         if all_:
             if hasattr(mod, "__all__"):
                 namespace = [(n, mod.__dict__[n]) for n in mod.__all__]
             else:
-                namespace = [(n, v) for n, v in mod.__dict__.items() if n not in MODULE_ATTRS and not n.startswith("_")]
+                namespace = [
+                    (n, v)
+                    for n, v in mod.__dict__.items()
+                    if n not in MODULE_ATTRS and not n.startswith("_")
+                ]
         else:
             if asname is None:
                 parentmodule = module.split(".")[0]
@@ -349,23 +391,34 @@ def _import(module, names=None, asname=None, sourcepath=None, globals_=None, _st
                 namespace = [(asname, mod)]
     else:
         if asname is not None:
-            raise ValueError("If names are passed, asname must be None; got {}. "
-                             "if you would like to specify new names for the imports, pass a dict as names, mapping "
-                             "the source module name to the imported name".format(asname))
+            raise ValueError(
+                "If names are passed, asname must be None; got {}. "
+                "if you would like to specify new names for the imports, pass a dict as names, mapping "
+                "the source module name to the imported name".format(asname)
+            )
         if isinstance(names, dict):
             rename = names
         elif isinstance(names, (list, tuple)):
             rename = dict(t if isinstance(t, tuple) else (t, t) for t in names)
         else:  # pragma: no cover
-            raise TypeError("Names must be a dict, list, str, or None; see docstring for details")
+            raise TypeError(
+                "Names must be a dict, list, str, or None; see docstring for details"
+            )
 
         namespace = [(rename[n], mod.__dict__[n]) for n in rename]
 
-    collisions = [(n, globals_[n], v) for n, v in namespace if n in globals_ and _isnot(v, globals_[n])]
+    collisions = [
+        (n, globals_[n], v)
+        for n, v in namespace
+        if n in globals_ and _isnot(v, globals_[n])
+    ]
 
     if collisions:
-        logger.warning("the following names will be shadowed in the global namespace after importing from {}:\n{}"
-                       .format(module, indent(_pprint(collisions), "    ")))
+        logger.warning(
+            "the following names will be shadowed in the global namespace after importing from {}:\n{}".format(
+                module, indent(_pprint(collisions), "    ")
+            )
+        )
 
     globals_.update(namespace)
 
@@ -375,15 +428,18 @@ def _classpath_and_dir(classpath, sourcepath, checkdir=True):
         sourcepath = os.path.dirname(classpath) or None
         classpath = os.path.basename(classpath)
     else:
-        assert os.path.sep not in classpath, "if a sourcepath is passed, then classpath must not contain {}, " \
-                                             "which is ambiguous; got {}".format(os.path.sep, classpath)
+        assert os.path.sep not in classpath, (
+            "if a sourcepath is passed, then classpath must not contain {}, "
+            "which is ambiguous; got {}".format(os.path.sep, classpath)
+        )
         if not os.path.isdir(sourcepath):
             if checkdir:
                 raise ValueError("if a sourcepath is passed, it must be a directory")
             sourcepath = os.path.dirname(sourcepath) or None
 
-    assert sourcepath is None or os.path.isdir(sourcepath), \
-        "if a sourcepath is passed, it must be an existing file or directory"
+    assert sourcepath is None or os.path.isdir(
+        sourcepath
+    ), "if a sourcepath is passed, it must be an existing file or directory"
 
     return classpath, sourcepath
 
@@ -418,8 +474,10 @@ def _validate_module_spec(spec, allow_tuple=False):
             modname, imports = spec
 
             if isinstance(imports, str) and imports != ALL:  # pragma: no cover
-                raise TypeError("if a string is passed to from_(modname).import_, it must be '*' "
-                                "(aliased to application.imports.ALL); got {}".format(imports))
+                raise TypeError(
+                    "if a string is passed to from_(modname).import_, it must be '*' "
+                    "(aliased to application.imports.ALL); got {}".format(imports)
+                )
             if isinstance(imports, (list, tuple)):
                 renames = imports
             elif isinstance(imports, dict):
@@ -429,31 +487,44 @@ def _validate_module_spec(spec, allow_tuple=False):
 
             bad_renames = [n for n in renames if not _is_valid_rename(n)]
             if bad_renames:
-                raise ValueError("the arguments to from_(modname).import_ must be names as positional args or "
-                                "`new_name=old_name` as keyword args; got bad ags {}"
-                                 .format(', '.join(repr(n) if isinstance(n, str) else '='.join(map(repr, n))
-                                                   for n in bad_renames)))
+                raise ValueError(
+                    "the arguments to from_(modname).import_ must be names as positional args or "
+                    "`new_name=old_name` as keyword args; got bad ags {}".format(
+                        ", ".join(
+                            repr(n) if isinstance(n, str) else "=".join(map(repr, n))
+                            for n in bad_renames
+                        )
+                    )
+                )
 
             spec = (modname, imports)
         elif len(spec) == 3:
             modname, imports, asname = spec
 
             if not isinstance(asname, str):  # pragma: no cover
-                raise TypeError("; got {}"
-                                .format(type(asname)))
+                raise TypeError("; got {}".format(type(asname)))
     else:  # pragma: no cover
-        raise TypeError("An import specification must be one of: from_(module).import_(*names, **renames),"
-                        "import_(module).as_(rename), or import_(module); got {}".format(spec))
+        raise TypeError(
+            "An import specification must be one of: from_(module).import_(*names, **renames),"
+            "import_(module).as_(rename), or import_(module); got {}".format(spec)
+        )
 
     if not isinstance(modname, str):  # pragma: no cover
-        raise TypeError("The first entry of an import specification must be a string specifying the module to be "
-                        "imported (from); got {}".format(modname))
+        raise TypeError(
+            "The first entry of an import specification must be a string specifying the module to be "
+            "imported (from); got {}".format(modname)
+        )
 
     return spec
 
 
 def _is_valid_rename(name):
-    return isinstance(name, str) or isinstance(name, tuple) and len(name) == 2 and all(isinstance(n, str) for n in name)
+    return (
+        isinstance(name, str)
+        or isinstance(name, tuple)
+        and len(name) == 2
+        and all(isinstance(n, str) for n in name)
+    )
 
 
 # add a few standard constructors here so that the .types submodule needn't import from this one

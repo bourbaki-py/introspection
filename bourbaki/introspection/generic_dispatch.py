@@ -6,8 +6,16 @@ from itertools import chain, combinations
 from .debug import DEBUG
 from .wrappers import const
 from .utils import name_of
-from .types import (issubclass_generic, deconstruct_generic, reconstruct_generic, to_type_alias,
-                    reparameterized_bases, get_generic_origin, get_generic_args, is_generic_type)
+from .types import (
+    issubclass_generic,
+    deconstruct_generic,
+    reconstruct_generic,
+    to_type_alias,
+    reparameterized_bases,
+    get_generic_origin,
+    get_generic_args,
+    is_generic_type,
+)
 
 Signature = Tuple[type, ...]
 
@@ -15,22 +23,29 @@ Signature = Tuple[type, ...]
 class UnknownSignature(TypeError, NotImplementedError):
     def __str__(self):
         dispatcher, sig = self.args
-        return "The dispatcher {} has no functions registered for signature {}".format(dispatcher, sig)
+        return "The dispatcher {} has no functions registered for signature {}".format(
+            dispatcher, sig
+        )
 
 
 class AmbiguousResolutionError(ValueError):
     def __str__(self):
         dispatcher, sig, sigs = self.args
-        return ("The dispatcher {} resolves the signature {} to multiple ambiguous signatures: {}"
-                .format(dispatcher, sig, sigs))
+        return "The dispatcher {} resolves the signature {} to multiple ambiguous signatures: {}".format(
+            dispatcher, sig, sigs
+        )
 
 
 def refines(sig1: Signature, sig2: Signature) -> bool:
-    return len(sig1) == len(sig2) and all(issubclass_generic(t1, t2) for t1, t2 in zip(sig1, sig2))
+    return len(sig1) == len(sig2) and all(
+        issubclass_generic(t1, t2) for t1, t2 in zip(sig1, sig2)
+    )
 
 
 def generalizes(sig1: Signature, sig2: Signature) -> bool:
-    return len(sig1) == len(sig2) and all(issubclass_generic(t2, t1) for t1, t2 in zip(sig1, sig2))
+    return len(sig1) == len(sig2) and all(
+        issubclass_generic(t2, t1) for t1, t2 in zip(sig1, sig2)
+    )
 
 
 def verbose_call(f):
@@ -38,15 +53,16 @@ def verbose_call(f):
         result = f(*args)
         print(call_repr(f, args) + " -> {}".format(result))
         return result
+
     return verbose_f
 
 
 def call_repr(f, args, to_str=repr):
-    return "{}({})".format(name_of(f), ', '.join(map(to_str, args)))
+    return "{}({})".format(name_of(f), ", ".join(map(to_str, args)))
 
 
 def type_str(t):
-    return re.sub(r'\btyping\.\b', '', str(t))
+    return re.sub(r"\btyping\.\b", "", str(t))
 
 
 def _deconstruct_signature(sig):
@@ -77,25 +93,28 @@ def _reconstruct_mapping(sigmap, type_=dict, values=False):
 
 # Dispatchers
 
+
 class GenericTypeLevelDispatch:
     _bottoms = None
     _tops = None
 
-    def __init__(self, name, isolated_bases: Optional[List[Type]]=None):
+    def __init__(self, name, isolated_bases: Optional[List[Type]] = None):
         self.name = self.__name__ = name
         self._cache = {}
         self._sig_cache = {}
         # self.dag = DiGraph()
         self.funcs = {}
         if isolated_bases:
-            self.isolated_bases = set(t if isinstance(t, tuple) else (t,) for t in isolated_bases)
+            self.isolated_bases = set(
+                t if isinstance(t, tuple) else (t,) for t in isolated_bases
+            )
         else:
             self.isolated_bases = None
 
     def __str__(self):
         return call_repr(type(self), (self.__name__,))
 
-    def register(self, *sig, debug: bool=DEBUG, as_const: bool=False):
+    def register(self, *sig, debug: bool = DEBUG, as_const: bool = False):
         if debug:
             print(call_repr("{}.register".format(self.__name__), sig))
 
@@ -115,7 +134,9 @@ class GenericTypeLevelDispatch:
 
         return dec
 
-    def register_all(self, *sigs: Union[Signature, Type], debug: bool=DEBUG, as_const: bool=False):
+    def register_all(
+        self, *sigs: Union[Signature, Type], debug: bool = DEBUG, as_const: bool = False
+    ):
         def dec(f):
             for s in sigs:
                 if not isinstance(s, (tuple, list)):
@@ -125,8 +146,12 @@ class GenericTypeLevelDispatch:
 
         return dec
 
-    def register_from_mapping(self, sigmap: Dict[Union[Signature, Type], Callable],
-                              debug: bool=DEBUG, as_const: bool=False):
+    def register_from_mapping(
+        self,
+        sigmap: Dict[Union[Signature, Type], Callable],
+        debug: bool = DEBUG,
+        as_const: bool = False,
+    ):
         for s, f in sigmap.items():
             if not isinstance(s, (tuple, list)):
                 s = (s,)
@@ -140,7 +165,7 @@ class GenericTypeLevelDispatch:
         self.funcs[sig] = f
         return self
 
-    def resolve(self, sig, *, debug: bool=False):
+    def resolve(self, sig, *, debug: bool = False):
         if debug:
             print("Resolving signature {} for dispatcher {}".format(sig, self))
         f = self._cache.get(sig)
@@ -190,26 +215,44 @@ class GenericTypeLevelDispatch:
 
         return best[0]
 
-    def visualize(self, target_sig=None, view=True, path=None, debug=False, title: Optional[str]=None, format_="svg",
-                  highlight_color="green", highlight_color_error="red", highlight_style="filled"):
+    def visualize(
+        self,
+        target_sig=None,
+        view=True,
+        path=None,
+        debug=False,
+        title: Optional[str] = None,
+        format_="svg",
+        highlight_color="green",
+        highlight_color_error="red",
+        highlight_style="filled",
+    ):
         try:
             from graphviz import Digraph as Dot
-            from networkx import DiGraph, induced_subgraph, transitive_reduction, neighbors
+            from networkx import (
+                DiGraph,
+                induced_subgraph,
+                transitive_reduction,
+                neighbors,
+            )
         except ImportError:
-            raise ImportError("the visualize method requires graphviz and networkx>=2.0")
+            raise ImportError(
+                "the visualize method requires graphviz and networkx>=2.0"
+            )
 
         dag = self.dag()
 
         if title is None:
-            title = ("Signature DAG for {} {} with {} signatures"
-                     .format(type(self).__name__, self.__name__, len(dag)))
+            title = "Signature DAG for {} {} with {} signatures".format(
+                type(self).__name__, self.__name__, len(dag)
+            )
 
         d = Dot(self.__name__, format=format_)
         d.attr(label=title)
         d.edges((str(b), str(a)) for a, b in dag.edges)
 
         if path is None:
-            path = mktemp(suffix='-{}.gv'.format(self.__name__))
+            path = mktemp(suffix="-{}.gv".format(self.__name__))
 
         if target_sig is not None:
             if not isinstance(target_sig, tuple):
@@ -232,7 +275,7 @@ class GenericTypeLevelDispatch:
             f = self.funcs[sig]
             label = call_repr(f, sig, to_str=type_str)
             if debug:
-                label = "{}: {}".format(metadata['order'], label)
+                label = "{}: {}".format(metadata["order"], label)
             attrs = highlight if sig in highlight_sigs else no_highlight
             d.node(str(sig), label=label, **attrs)
 
@@ -257,8 +300,9 @@ class GenericTypeLevelDispatch:
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        funcs, cache, sig_cache = (state.pop(attr) for attr in
-                                   ["funcs", "_cache", "_sig_cache"])
+        funcs, cache, sig_cache = (
+            state.pop(attr) for attr in ["funcs", "_cache", "_sig_cache"]
+        )
 
         funcs, cache = (_deconstruct_mapping(m) for m in (funcs, cache))
         sig_cache = _deconstruct_mapping(sig_cache, values=True)
@@ -266,8 +310,12 @@ class GenericTypeLevelDispatch:
         return state
 
     def __setstate__(self, state):
-        funcs, cache, sig_cache = (state.pop(attr) for attr in ["funcs", "_cache", "_sig_cache"])
-        state["funcs"], state["_cache"] = (_reconstruct_mapping(m) for m in (funcs, cache))
+        funcs, cache, sig_cache = (
+            state.pop(attr) for attr in ["funcs", "_cache", "_sig_cache"]
+        )
+        state["funcs"], state["_cache"] = (
+            _reconstruct_mapping(m) for m in (funcs, cache)
+        )
         state["_sig_cache"] = _reconstruct_mapping(sig_cache, values=True)
         self.__dict__.update(state)
 
@@ -278,6 +326,7 @@ class GenericTypeLevelDispatch:
 
 class GenericTypeLevelSingleDispatch(GenericTypeLevelDispatch):
     """Singly-dispatched version"""
+
     def __call__(self, type_, **kwargs):
         sig = (type_,)
         f = self.resolve(sig)

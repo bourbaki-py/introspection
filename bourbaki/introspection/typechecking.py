@@ -6,13 +6,31 @@ from functools import partial, lru_cache
 from warnings import warn
 from .utils import name_of
 from .imports import import_type
-from .types import (LazyType, is_top_type, to_concrete_type, constraint_type, issubclass_generic,
-                    reconstruct_generic, deconstruct_generic, get_generic_args, typetypes, base_newtype_of)
+from .types import (
+    LazyType,
+    is_top_type,
+    to_concrete_type,
+    constraint_type,
+    issubclass_generic,
+    reconstruct_generic,
+    deconstruct_generic,
+    get_generic_args,
+    typetypes,
+    base_newtype_of,
+)
 from .generic_dispatch import GenericTypeLevelSingleDispatch, const
-from .generic_dispatch_helpers import UnionWrapper, TupleWrapper, CollectionWrapper, MappingWrapper, LazyWrapper
+from .generic_dispatch_helpers import (
+    UnionWrapper,
+    TupleWrapper,
+    CollectionWrapper,
+    MappingWrapper,
+    LazyWrapper,
+)
 
 
-type_checker = GenericTypeLevelSingleDispatch("type_checker", isolated_bases=[typing.Union])
+type_checker = GenericTypeLevelSingleDispatch(
+    "type_checker", isolated_bases=[typing.Union]
+)
 
 
 @lru_cache(None)
@@ -46,7 +64,9 @@ class _GenericContainerTypeCheckerMixin(_GenericTypeCheckerMixin):
         return new
 
     def __call__(self, value):
-        return isinstance(value, self.generic_type) and self.helper_cls.__call__(self, value)
+        return isinstance(value, self.generic_type) and self.helper_cls.__call__(
+            self, value
+        )
 
 
 class _GenericUnionTypeCheckerMixin(_GenericTypeCheckerMixin):
@@ -57,10 +77,14 @@ class _GenericUnionTypeCheckerMixin(_GenericTypeCheckerMixin):
 def isinstance_of(type_, *args):
     if args:
         # generic that hasn't been explicitly registered
-        warn("got type args {a} for unregistered type {t}; can only check that a value is an instance of {t}. "
-             "To perform a more specific check, decorate a function with "
-             "introspection.typechecking.type_checker.register({t}), to accept positional args for {t} and the type "
-             "variables of {t}, and return a callable taking a value and returning a bool".format(t=type_, a=args))
+        warn(
+            "got type args {a} for unregistered type {t}; can only check that a value is an instance of {t}. "
+            "To perform a more specific check, decorate a function with "
+            "introspection.typechecking.type_checker.register({t}), to accept positional args for {t} and the type "
+            "variables of {t}, and return a callable taking a value and returning a bool".format(
+                t=type_, a=args
+            )
+        )
     if is_top_type(type_):
         return const(True)
     type_ = to_concrete_type(type_)
@@ -87,9 +111,13 @@ class CallableTypeChecker:
         try:
             sig = signature(func)
         except ValueError:
-            warn("Can't check that {} is {}; call to inspect.signature() failed - most likely an extension or builtin; "
-                 "returning True"
-                 .format(func, "{}[{}, {}]".format(name_of(self.callable_), signature_, return_)))
+            warn(
+                "Can't check that {} is {}; call to inspect.signature() failed - most likely an extension or builtin; "
+                "returning True".format(
+                    func,
+                    "{}[{}, {}]".format(name_of(self.callable_), signature_, return_),
+                )
+            )
             return True
 
         if signature_ is Ellipsis:
@@ -105,11 +133,17 @@ class CallableTypeChecker:
         for p in sig.parameters.values():
             if freeze:
                 # no required args past the ones specified
-                if p.default is empty and p.kind not in (Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD):
+                if p.default is empty and p.kind not in (
+                    Parameter.VAR_POSITIONAL,
+                    Parameter.VAR_KEYWORD,
+                ):
                     return False
             else:
                 t = object if p.annotation is empty else p.annotation
-                if p.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD):
+                if p.kind in (
+                    Parameter.POSITIONAL_ONLY,
+                    Parameter.POSITIONAL_OR_KEYWORD,
+                ):
                     this_sig.append(t)
                 elif p.kind is Parameter.VAR_POSITIONAL:
                     this_sig.extend([t] * (len(signature_) - len(this_sig)))
@@ -132,14 +166,20 @@ class CallableTypeChecker:
         state = self.__dict__.copy()
         state["return_"] = deconstruct_generic(state["return_"])
         sig = state["signature_"]
-        state["signature_"] = (list(map(deconstruct_generic, sig)) if isinstance(sig, (list, tuple))
-                               else deconstruct_generic(sig))
+        state["signature_"] = (
+            list(map(deconstruct_generic, sig))
+            if isinstance(sig, (list, tuple))
+            else deconstruct_generic(sig)
+        )
 
     def __setstate__(self, state):
         state["return_"] = reconstruct_generic(state["return_"])
         sig = state["signature_"]
-        state["signature_"] = (list(map(reconstruct_generic, sig)) if isinstance(sig, (list, tuple))
-                               else reconstruct_generic(sig))
+        state["signature_"] = (
+            list(map(reconstruct_generic, sig))
+            if isinstance(sig, (list, tuple))
+            else reconstruct_generic(sig)
+        )
         self.__dict__.update(state)
 
 
@@ -233,7 +273,9 @@ class _TypeAliasTypeChecker:
         self.arg = arg
 
     def __call__(self, obj):
-        return isinstance(obj, self.type_) and isinstance(self.get_value_for_arg(obj), self.arg)
+        return isinstance(obj, self.type_) and isinstance(
+            self.get_value_for_arg(obj), self.arg
+        )
 
 
 @type_checker.register(typing.Pattern)

@@ -1,11 +1,32 @@
 # coding:utf-8
 import typing
 import enum
-from .inspection import is_top_type, is_named_tuple_class, is_concrete_type, get_generic_args
+from .inspection import (
+    is_top_type,
+    is_named_tuple_class,
+    is_concrete_type,
+    get_generic_args,
+)
 from .compat import typetypes
 
-STDLIB_MODULES = {"builtins", "collections", "typing", "abc", "numbers", "decimal", "re", "_sre", "os",
-                  "enum", "datetime", "time", "pathlib", "ipaddress", "urllib", "uuid"}
+STDLIB_MODULES = {
+    "builtins",
+    "collections",
+    "typing",
+    "abc",
+    "numbers",
+    "decimal",
+    "re",
+    "_sre",
+    "os",
+    "enum",
+    "datetime",
+    "time",
+    "pathlib",
+    "ipaddress",
+    "urllib",
+    "uuid",
+}
 
 
 def _issubclass_gen(sub, clss):
@@ -27,6 +48,7 @@ class LazyType(typing.Generic[CLS]):
 
 
 # convenience type aliases for registering functions
+
 
 class _InstanceCheckFromSubclassCheck(type):
     def __instancecheck__(self, instance):  # pragma: no cover
@@ -62,7 +84,9 @@ class NonStrCollectionMeta(_InstanceCheckFromSubclassCheck):
         if isinstance(subclass, type(self)):
             # if subclass shares the same metaclass as self,
             # and any explicit base of subclass is a subclass of self, then subclass _is_ a subtype
-            return any(issubclass(base, self) for base in getattr(subclass, '__bases__', ()))
+            return any(
+                issubclass(base, self) for base in getattr(subclass, "__bases__", ())
+            )
 
         if any(issubclass(base, subclass) for base in self.__bases__):
             # anything above this type's explicit bases is _not_ a subtype
@@ -104,8 +128,9 @@ class BuiltinMeta(_InstanceCheckFromSubclassCheck):
 
 class BuiltinAtomicMeta(BuiltinMeta):
     def __subclasscheck__(cls, subclass):
-        return super().__subclasscheck__(subclass) and (subclass is str
-                                                        or not issubclass(subclass, typing.Collection))
+        return super().__subclasscheck__(subclass) and (
+            subclass is str or not issubclass(subclass, typing.Collection)
+        )
 
 
 class Builtin(metaclass=BuiltinMeta):
@@ -115,6 +140,7 @@ class Builtin(metaclass=BuiltinMeta):
 
 class BuiltinAtomic(metaclass=BuiltinAtomicMeta):
     """for registration of a default method for all builtins"""
+
     pass
 
 
@@ -122,15 +148,18 @@ class NonStdLibMeta(_InstanceCheckFromSubclassCheck):
     def __subclasscheck__(self, subclass):
         # don't allow subclasses of enum.Enum - gray area but they shouldn't generally have custom constuctors
         # ditto for NamedTuple classes
-        return (subclass.__module__.split(".")[0] not in STDLIB_MODULES
-                and not issubclass(subclass, enum.Enum)
-                and not is_named_tuple_class(subclass))
+        return (
+            subclass.__module__.split(".")[0] not in STDLIB_MODULES
+            and not issubclass(subclass, enum.Enum)
+            and not is_named_tuple_class(subclass)
+        )
 
 
 class NonStdLib(metaclass=NonStdLibMeta):
     """for registration of types outside of the standard library which may subclass ABCs such as Collection;
     we may want to treat them separately in some cases as they may not have the same constructors -
     an example is pandas.DataFrame"""
+
     pass
 
 
@@ -146,9 +175,12 @@ class NamedTupleABC(tuple, metaclass=NamedTupleABCMeta):
 # for use in creating custom metaclasses that behave like typing.Generic with __getitem__, but without having to deal
 # with the intricacies of the typing module
 
+
 class PseudoGenericMeta(type):
     __origin__ = None
     __args__ = None
 
     def __getitem__(self, item):
-        raise NotImplementedError("Subclasses of PseudoGenericMeta must implement __getitem__")
+        raise NotImplementedError(
+            "Subclasses of PseudoGenericMeta must implement __getitem__"
+        )

@@ -56,6 +56,7 @@ class ReducingGenericWrapper(GenericWrapper):
 class LazyWrapper(GenericWrapper):
     """subclass and override getter to implement LazyType wrappers for config or text IO,
     decorating the subclass with the dispatcher's (if any) register() method"""
+
     def __init__(self, lazy, ref):
         self.ref = ref if isinstance(ref, str) else ref.__forward_arg__
         super().__init__(lazy, ref)
@@ -113,8 +114,11 @@ class TupleWrapper(ReducingGenericWrapper):
 
     def __call__(self, value):
         if self.require_same_len and len(value) != len(self.funcs):
-            raise ValueError("{} expected a collection of {} values for type {} but received {}"
-                             .format(self, len(self.funcs), self.type_, value))
+            raise ValueError(
+                "{} expected a collection of {} values for type {} but received {}".format(
+                    self, len(self.funcs), self.type_, value
+                )
+            )
         return super().__call__(value)
 
 
@@ -186,8 +190,11 @@ class UnionWrapper(ReducingGenericWrapper):
 
         self.funcs = tuple(map_(self.getter, types))
         if not self.funcs:
-            raise TypeError("Could not determine functions for {} type args using getter {}"
-                            .format(union[types], self.getter))
+            raise TypeError(
+                "Could not determine functions for {} type args using getter {}".format(
+                    union[types], self.getter
+                )
+            )
 
     def call_iter(self, value):
         excs = []

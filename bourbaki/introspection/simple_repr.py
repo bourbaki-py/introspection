@@ -1,10 +1,17 @@
-#coding:utf-8
+# coding:utf-8
 from typing import Tuple, Union
 from types import MethodType
 from functools import partial, wraps
 from warnings import warn
 from inspect import signature, Parameter
-from .callables import bind, call_repr, params_of_kind, has_varargs, varkwargs_name, varargs_name
+from .callables import (
+    bind,
+    call_repr,
+    params_of_kind,
+    has_varargs,
+    varkwargs_name,
+    varargs_name,
+)
 
 # this is set on the class; we don't use __signature__ to prevent inspect.signature giving erroneous sigs on subclasses
 INIT_SIG_ATTR = "__signature__"
@@ -27,24 +34,33 @@ def simple_repr(self):
         return object.__repr__(self)
     t = type(self)
     name, sig = getattr(t, REPR_NAME_ATTR, t.__name__), getattr(t, INIT_SIG_ATTR)
-    varargs_name_, varkwargs_name_ = getattr(t, INIT_VARARGS_NAME_ATTR), getattr(t, INIT_VARKWARGS_NAME_ATTR)
-    return call_repr(name, sig, args, varpos_name=varargs_name_, varkw_name=varkwargs_name_)
+    varargs_name_, varkwargs_name_ = (
+        getattr(t, INIT_VARARGS_NAME_ATTR),
+        getattr(t, INIT_VARKWARGS_NAME_ATTR),
+    )
+    return call_repr(
+        name, sig, args, varpos_name=varargs_name_, varkw_name=varkwargs_name_
+    )
 
 
 # class decorator
-def with_simple_repr(inspect_attrs: Union[bool, Tuple[str]]=INSPECT_ATTRS_DEFAULT,
-                     replace_defaults: bool=REPLACE_DEFAULTS_DEFAULT,
-                     use_qualname: bool=USE_QUALNAME_DEFAULT):
+def with_simple_repr(
+    inspect_attrs: Union[bool, Tuple[str]] = INSPECT_ATTRS_DEFAULT,
+    replace_defaults: bool = REPLACE_DEFAULTS_DEFAULT,
+    use_qualname: bool = USE_QUALNAME_DEFAULT,
+):
     if isinstance(inspect_attrs, type):
         cls = inspect_attrs
         # the simple @with_simple_repr decorator usage
         return set_simple_repr_class_attrs(cls)
     else:
         # return a decorator
-        return partial(set_simple_repr_class_attrs,
-                       inspect_attrs=inspect_attrs,
-                       replace_defaults=replace_defaults,
-                       use_qualname=use_qualname)
+        return partial(
+            set_simple_repr_class_attrs,
+            inspect_attrs=inspect_attrs,
+            replace_defaults=replace_defaults,
+            use_qualname=use_qualname,
+        )
 
 
 # decorator for __init__ that stores call args info
@@ -90,25 +106,30 @@ def update_repr_args(self):
         if replace_defaults:
             filter_ = None
         else:
+
             def filter_(param):
                 # where the default value wasn't passed, check the attribute
                 return arguments[param.name] != param.default
 
-        check_attrs_ = params_of_kind(sig.parameters,
-                                      (
-                                          Parameter.POSITIONAL_OR_KEYWORD,
-                                          Parameter.VAR_POSITIONAL,
-                                          Parameter.VAR_KEYWORD,
-                                          Parameter.KEYWORD_ONLY
-                                      ),
-                                      filter_=filter_, names_only=True
-                                      )
+        check_attrs_ = params_of_kind(
+            sig.parameters,
+            (
+                Parameter.POSITIONAL_OR_KEYWORD,
+                Parameter.VAR_POSITIONAL,
+                Parameter.VAR_KEYWORD,
+                Parameter.KEYWORD_ONLY,
+            ),
+            filter_=filter_,
+            names_only=True,
+        )
 
         if not isinstance(check_attrs, bool):
             # only check the specified attrs for replacement
             check_attrs_ = list(filter(check_attrs.__contains__, check_attrs_))
 
-        arguments.update((a, getattr(self, a)) for a in check_attrs_ if hasattr(self, a))
+        arguments.update(
+            (a, getattr(self, a)) for a in check_attrs_ if hasattr(self, a)
+        )
 
         # now check any attrs that may have been set from **kwargs
         kw_name = getattr(cls, INIT_VARKWARGS_NAME_ATTR)
@@ -120,7 +141,9 @@ def update_repr_args(self):
             else:
                 check_attrs_ = set(kwargs).intersection(check_attrs)
 
-            kwargs.update((a, getattr(self, a)) for a in check_attrs_ if hasattr(self, a))
+            kwargs.update(
+                (a, getattr(self, a)) for a in check_attrs_ if hasattr(self, a)
+            )
 
     setattr(self, INIT_ARGS_ATTR, arguments)
 
@@ -135,11 +158,14 @@ def update_repr(method):
     return newmethod
 
 
-def set_simple_repr_class_attrs(cls, inspect_attrs=INSPECT_ATTRS_DEFAULT,
-                                replace_defaults=REPLACE_DEFAULTS_DEFAULT,
-                                use_qualname=USE_QUALNAME_DEFAULT,
-                                sig=None,
-                                override_init=True):
+def set_simple_repr_class_attrs(
+    cls,
+    inspect_attrs=INSPECT_ATTRS_DEFAULT,
+    replace_defaults=REPLACE_DEFAULTS_DEFAULT,
+    use_qualname=USE_QUALNAME_DEFAULT,
+    sig=None,
+    override_init=True,
+):
     # class signature - bound to an instance; can't call directly on cls lest signature() look up __signature__ on
     # a parent class with a different __init__
     if sig is None:
@@ -147,21 +173,33 @@ def set_simple_repr_class_attrs(cls, inspect_attrs=INSPECT_ATTRS_DEFAULT,
     # sig = to_bound_method_signature(init_sig)
 
     if has_varargs(sig) and bool(params_of_kind(sig, Parameter.POSITIONAL_OR_KEYWORD)):
-        warn("class __init__ signatures with both *args and named positional args have less informative "
-             "representations than those with *args and only named keyword-only args:\n{} has signature {}"
-             .format(cls, sig))
+        warn(
+            "class __init__ signatures with both *args and named positional args have less informative "
+            "representations than those with *args and only named keyword-only args:\n{} has signature {}".format(
+                cls, sig
+            )
+        )
 
     if not isinstance(inspect_attrs, (bool, tuple, frozenset)):  # pragma: no cover
-        raise TypeError("inspect_attrs should be a bool or an immutable collection of (tuple, frozenset) "
-                        "attribute names to be inspected")
+        raise TypeError(
+            "inspect_attrs should be a bool or an immutable collection of (tuple, frozenset) "
+            "attribute names to be inspected"
+        )
     elif isinstance(inspect_attrs, (tuple, frozenset)):
-        if not all(isinstance(a, str) and str.isidentifier(a) for a in inspect_attrs):  # pragma: no cover
-            raise TypeError("when a collection of attribute names is passed as inspect_attrs, "
-                            "all names should be strings and legal identifiers")
+        if not all(
+            isinstance(a, str) and str.isidentifier(a) for a in inspect_attrs
+        ):  # pragma: no cover
+            raise TypeError(
+                "when a collection of attribute names is passed as inspect_attrs, "
+                "all names should be strings and legal identifiers"
+            )
 
         if any(a not in sig.parameters for a in inspect_attrs):  # pragma: no cover
-            warn("attribute names {} are not present in the init signature and will be ignored"
-                 .format(tuple(set(inspect_attrs).difference(sig.parameters))))
+            warn(
+                "attribute names {} are not present in the init signature and will be ignored".format(
+                    tuple(set(inspect_attrs).difference(sig.parameters))
+                )
+            )
 
     setattr(cls, INIT_SIG_ATTR, sig)
     setattr(cls, INSPECT_ATTRS_ATTR, inspect_attrs)

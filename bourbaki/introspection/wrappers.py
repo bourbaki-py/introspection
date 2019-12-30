@@ -1,4 +1,4 @@
-#coding:utf-8
+# coding:utf-8
 from inspect import signature, Parameter
 from functools import wraps, update_wrapper, lru_cache
 import dask
@@ -9,10 +9,14 @@ empty = Parameter.empty
 
 class ArgPreparer:
     def __init__(self, dask_graph, null_value=None):
-        if not isinstance(dask_graph, dict) or not all(isinstance(k, str) for k in dask_graph):
-            raise ValueError("dask_graph must be a dictionary as accepted by "
-                             "dask.get, whose keys are argument names in the "
-                             "signature of the function being wrapped")
+        if not isinstance(dask_graph, dict) or not all(
+            isinstance(k, str) for k in dask_graph
+        ):
+            raise ValueError(
+                "dask_graph must be a dictionary as accepted by "
+                "dask.get, whose keys are argument names in the "
+                "signature of the function being wrapped"
+            )
         self.graph = dask_graph
         self.null_value = null_value
 
@@ -43,7 +47,7 @@ def lru_cache_sig_preserving(*args, **kwargs):
 
 
 def cached_getter(method):
-    attr = '_' + name_of(method)
+    attr = "_" + name_of(method)
 
     def getter(self):
         val = getattr(self, attr, empty)

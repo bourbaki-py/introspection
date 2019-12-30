@@ -7,16 +7,39 @@ import collections
 from itertools import combinations
 from functools import singledispatch
 import typing_inspect
-from typing_inspect import is_callable_type, get_origin, get_parameters, get_generic_bases as _get_generic_bases
+from typing_inspect import (
+    is_callable_type,
+    get_origin,
+    get_parameters,
+    get_generic_bases as _get_generic_bases,
+)
 from ..debug import trace
 
 
-NON_TYPING_STDLIB_MODULES = frozenset(("builtins", "collections", "datetime", "time", "ipadress", "pathlib", "urllib",
-                                       "uuid", "numbers", "decimal", "fractions", "re", "_sre", "os", "enum"))
+NON_TYPING_STDLIB_MODULES = frozenset(
+    (
+        "builtins",
+        "collections",
+        "datetime",
+        "time",
+        "ipadress",
+        "pathlib",
+        "urllib",
+        "uuid",
+        "numbers",
+        "decimal",
+        "fractions",
+        "re",
+        "_sre",
+        "os",
+        "enum",
+    )
+)
 
 
 if sys.version_info[:2] >= (3, 7):  # pragma: no cover
     from typing import ForwardRef, _GenericAlias
+
     EVALUATE_DEFAULT = True
     TYPE_ALIASES = False
     NEW_TYPING = True
@@ -37,14 +60,19 @@ if sys.version_info[:2] >= (3, 7):  # pragma: no cover
     }
 
     abstract_types = (typing._Protocol, typing.Generic)
-    generics = {t for t in vars(typing).values() if t not in abstract_types
-                and isinstance(t, typing._GenericAlias) and get_parameters(t)}
+    generics = {
+        t
+        for t in vars(typing).values()
+        if t not in abstract_types
+        and isinstance(t, typing._GenericAlias)
+        and get_parameters(t)
+    }
     generics.add(Callable)
 
     def _parameterize(t, params=_tvars):
         ps = get_parameters(t)
         if ps:
-            return t[params[:len(ps)]]
+            return t[params[: len(ps)]]
         return t
 
     def _set_typing_bases():
@@ -81,11 +109,14 @@ if sys.version_info[:2] >= (3, 7):  # pragma: no cover
             return typing_bases.get(t, ())
         return _get_generic_bases(t) or ()
 
+
 else:  # pragma: no cover
     from typing import _ForwardRef as ForwardRef
     from typing import _TypeAlias
+
     _GenericAlias = None
     from typing_inspect import get_generic_bases
+
     EVALUATE_DEFAULT = False
     TYPE_ALIASES = True
     NEW_TYPING = False
@@ -93,7 +124,6 @@ else:  # pragma: no cover
     typing_bases = None
     generics = None
     _parameterize = None
-
 
     @singledispatch
     def get_concrete_origin(t):
@@ -119,6 +149,7 @@ class CallableSignature(tuple):
 
 # get the base generic origin of a parameterized generic
 
+
 @singledispatch
 @trace
 def get_generic_origin(t):
@@ -139,13 +170,16 @@ def _get_generic_origin_sig(sig):
 
 
 @get_generic_origin.register(_TypeAlias)
-def _get_alias_origin(alias):  # pragma: no cover (python3.6 only, works if tests pass - they include Pattern)
+def _get_alias_origin(
+    alias
+):  # pragma: no cover (python3.6 only, works if tests pass - they include Pattern)
     return getattr(typing, alias.name)
 
 
 # get concrete args from a generic
 
 # we have to monkey-patch this for now due to a bug in typing_inspect
+
 
 def _eval_args(args):
     """Internal helper for get_args."""
@@ -165,10 +199,12 @@ def _eval_args(args):
             res.append(type(arg[0]).__getitem__(arg[0], _eval_args(arg[1:])))
     return tuple(res)
 
+
 typing_inspect._eval_args = _eval_args
 
 
 # get typevars from a generic
+
 
 @singledispatch
 @trace
@@ -196,6 +232,7 @@ def _get_alias_params(alias):  # pragma: no cover (python3.6 only, works if test
 
 # get original bases (i.e. those that appeared in the source code `class ClassName(*original_bases): ...`
 
+
 @singledispatch
 @trace
 def get_original_bases(t):
@@ -213,17 +250,20 @@ def _get_original_bases(t):
 
 # get a concrete type (i.e. one that can be called as a constructor) from a generic alias
 
+
 def to_concrete_type(t):
     return typing_alias_to_stdlib_type.get(t, t)
 
 
 # get a type alias from a (possibly) instantiable stdlib type (inverse of the above)
 
+
 def to_type_alias(t):
     return stdlib_type_to_typing_alias.get(t, t)
 
 
 # for mapping abstract types to concrete constructors
+
 
 def get_constructor_for(type_):
     return typing_to_stdlib_constructor.get(type_, type_)
@@ -235,7 +275,14 @@ origin_to_typing_alias = {}
 stdlib_type_to_typing_alias = {}
 typing_alias_to_stdlib_type = {}
 typing_to_stdlib_constructor = {}
-typetypes = (type(Union), type(Tuple), type(Callable), type(typing.Mapping), type(typing.Pattern), _TypeAlias)
+typetypes = (
+    type(Union),
+    type(Tuple),
+    type(Callable),
+    type(typing.Mapping),
+    type(typing.Pattern),
+    _TypeAlias,
+)
 
 
 def _set_origin_to_typing_alias():
@@ -267,28 +314,32 @@ def _set_stdlib_type_to_typing_alias():
 
 def _set_typing_to_stdlib_constructor():
     global typing_to_stdlib_constructor
-    typing_to_stdlib_constructor.update({
-        typing.Iterable: list,
-        typing.Container: list,
-        typing.Sequence: list,
-        typing.MutableSequence: list,
-        typing.Collection: list,
-        typing.List: list,
-        typing.Tuple: tuple,
-        typing.AbstractSet: set,
-        typing.Set: set,
-        typing.MutableSet: set,
-        typing.FrozenSet: frozenset,
-        typing.Mapping: dict,
-        typing.MutableMapping: dict,
-        typing.Dict: dict,
-        typing.Counter: collections.Counter,
-        typing.ChainMap: collections.ChainMap,
-        typing.Deque: collections.deque,
-    })
-    for tname, type_ in [("OrderedDict", collections.OrderedDict),
-                         ("_Pattern", re.compile),
-                         ("Pattern", re.compile)]:
+    typing_to_stdlib_constructor.update(
+        {
+            typing.Iterable: list,
+            typing.Container: list,
+            typing.Sequence: list,
+            typing.MutableSequence: list,
+            typing.Collection: list,
+            typing.List: list,
+            typing.Tuple: tuple,
+            typing.AbstractSet: set,
+            typing.Set: set,
+            typing.MutableSet: set,
+            typing.FrozenSet: frozenset,
+            typing.Mapping: dict,
+            typing.MutableMapping: dict,
+            typing.Dict: dict,
+            typing.Counter: collections.Counter,
+            typing.ChainMap: collections.ChainMap,
+            typing.Deque: collections.deque,
+        }
+    )
+    for tname, type_ in [
+        ("OrderedDict", collections.OrderedDict),
+        ("_Pattern", re.compile),
+        ("Pattern", re.compile),
+    ]:
         t = getattr(typing, tname, None)
         if t is not None:
             typing_to_stdlib_constructor[t] = type_

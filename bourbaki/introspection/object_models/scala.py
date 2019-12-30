@@ -1,4 +1,4 @@
-#coding:utf-8
+# coding:utf-8
 from inspect import signature, Signature
 from itertools import islice
 from operator import attrgetter
@@ -21,48 +21,57 @@ class ScalaClass(type):
         - attributes are stored on the instance when the class has dummy attributes which are var or val instances
         - val attributes cannot be mutated (they are properties with no setter)
     """
+
     __vals__ = None
 
     def __new__(mcs, name, bases, namespace):
         bases, proper_base = validate_bases(bases)
 
         if proper_base is not None:
-            namespace['__base__'] = proper_base
+            namespace["__base__"] = proper_base
             base_init = proper_base.__init__ if defines_init(proper_base) else None
         else:
             base_init = None
 
-        annotations = namespace.get('__annotations__', {})
+        annotations = namespace.get("__annotations__", {})
 
-        vals = dict((name, v.set_name(name).set_type(annotations.get(name)))
-                    for name, v in namespace.items() if isinstance(v, (val, var)))
+        vals = dict(
+            (name, v.set_name(name).set_type(annotations.get(name)))
+            for name, v in namespace.items()
+            if isinstance(v, (val, var))
+        )
 
-        if hasattr(proper_base, '__vals__'):
+        if hasattr(proper_base, "__vals__"):
             vals.update(proper_base.__vals__)
 
-        namespace['__vals__'] = vals
+        namespace["__vals__"] = vals
 
         namespace.update((name, v.make_property()) for name, v in vals.items())
 
-        if '__init__' in namespace:
-            init = namespace['__init__']
+        if "__init__" in namespace:
+            init = namespace["__init__"]
 
             if proper_base is not None and base_init is not None:
-                init = SubclassMutatorMethod(init, base_init,
-                                             wrapped_is_method=True, call_wrapped_manually=False)
+                init = SubclassMutatorMethod(
+                    init, base_init, wrapped_is_method=True, call_wrapped_manually=False
+                )
             else:
                 init.__signature__ = signature(init)
 
-            namespace['__init__'] = init
-            namespace['__signature__'] = make_class_signature(init)
+            namespace["__init__"] = init
+            namespace["__signature__"] = make_class_signature(init)
         else:
             if base_init is not None:
-                namespace['__signature__'] = make_class_signature(base_init)
+                namespace["__signature__"] = make_class_signature(base_init)
             else:
                 # have to get around signature() looking up the metaclass __call__
-                namespace['__signature__'] = Signature()
+                namespace["__signature__"] = Signature()
 
-        if '__new__' in namespace and proper_base is not None and defines_new(proper_base):
+        if (
+            "__new__" in namespace
+            and proper_base is not None
+            and defines_new(proper_base)
+        ):
             raise Multiple__new__Error(proper_base)
 
         cls = type.__new__(mcs, name, bases, namespace)
@@ -74,10 +83,15 @@ class ScalaClass(type):
         if any(name not in params for name in vals):
             raise MissingValError(set(vals).difference(params), cls_sig)
 
-        if '__repr__' not in namespace:
+        if "__repr__" not in namespace:
             # if no repr is defined manually, insert the standard repr
-            cls = set_simple_repr_class_attrs(cls, inspect_attrs=True, replace_defaults=False,
-                                              use_qualname=False, override_init=False)
+            cls = set_simple_repr_class_attrs(
+                cls,
+                inspect_attrs=True,
+                replace_defaults=False,
+                use_qualname=False,
+                override_init=False,
+            )
 
         return cls
 
@@ -111,6 +125,7 @@ class ScalaClass(type):
 # properties #
 ##############
 
+
 class val_mixin:
     name = None
     private_name = None
@@ -127,7 +142,7 @@ class val_mixin:
 
     def set_name(self, name):
         self.name = name
-        self.private_name = '_{}'.format(name)
+        self.private_name = "_{}".format(name)
         return self
 
     def set_type(self, type_=None):
@@ -159,7 +174,9 @@ class val_mixin:
         if not self.validators:
             return "<val {}>".format(self.name)
         else:
-            return "<val {}(validators=({}))>".format(self.name, ', '.join(map(repr, self.validators)))
+            return "<val {}(validators=({}))>".format(
+                self.name, ", ".join(map(repr, self.validators))
+            )
 
 
 class val(val_mixin):
@@ -187,10 +204,14 @@ class type_check:
     def __call__(self, obj):
         if isinstance(obj, self.type_):
             return obj
-        raise TypeError("expected an instance of {}; got {}".format(self.type_, type(obj)))
+        raise TypeError(
+            "expected an instance of {}; got {}".format(self.type_, type(obj))
+        )
 
     def __str__(self):
-        return "{}({})".format(self.__class__.__name__, ', '.join(map(repr, self.type_)))
+        return "{}({})".format(
+            self.__class__.__name__, ", ".join(map(repr, self.type_))
+        )
 
     __repr__ = __str__
 
@@ -198,6 +219,7 @@ class type_check:
 ###########
 # helpers #
 ###########
+
 
 def validate_bases(bases):
     proper_bases = list(filter(is_proper_class, bases))
@@ -231,38 +253,48 @@ def make_class_signature(init):
 # Exceptions #
 ##############
 
+
 class ScalaClassError(Exception):
     pass
 
 
 class MultipleInheritanceError(ScalaClassError, TypeError):
     def __str__(self):
-        return ('Can only inherit from at most one proper (non-interface) class; {} all define custom '
-                '__init__ or __new__'.format(self.args))
+        return (
+            "Can only inherit from at most one proper (non-interface) class; {} all define custom "
+            "__init__ or __new__".format(self.args)
+        )
 
 
 class Multiple__new__Error(ScalaClassError, TypeError):
     def __str__(self):
-        return ('Cannot override __new__ when inheriting from a class which also defines it; {} defines a '
-                'custom __new__'.format(self.args[0]))
+        return (
+            "Cannot override __new__ when inheriting from a class which also defines it; {} defines a "
+            "custom __new__".format(self.args[0])
+        )
 
 
 class MissingValError(ScalaClassError, TypeError):
     def __str__(self):
-        return ('{} are specified as vals on the class but their names are absent in the init signature: {}'
-                .format(self.args[0], self.args[1]))
+        return "{} are specified as vals on the class but their names are absent in the init signature: {}".format(
+            self.args[0], self.args[1]
+        )
 
 
 class ValValidationError(ScalaClassError, ValueError):
     def __str__(self):
-        return 'Error setting val {}: {}'.format(self.args[0], self.args[1])
+        return "Error setting val {}: {}".format(self.args[0], self.args[1])
 
 
 class ValValidatorError(ScalaClassError, TypeError):
     def __str__(self):
-        return 'Expected validator for {} to be callable; got type {}'.format(self.args[0], type(self.args[1]))
+        return "Expected validator for {} to be callable; got type {}".format(
+            self.args[0], type(self.args[1])
+        )
 
 
 class ValTypeValidatorError(ScalaClassError, TypeError):
     def __str__(self):
-        return 'Expected validator for {} to be a type; got {}'.format(self.args[0], self.args[1])
+        return "Expected validator for {} to be a type; got {}".format(
+            self.args[0], self.args[1]
+        )

@@ -1,5 +1,16 @@
 # coding:utf-8
-from typing import Union, Sequence, Mapping, Dict, Set, Tuple, Callable, Iterable, Any, Optional
+from typing import (
+    Union,
+    Sequence,
+    Mapping,
+    Dict,
+    Set,
+    Tuple,
+    Callable,
+    Iterable,
+    Any,
+    Optional,
+)
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from collections.abc import Mapping as MappingABC
@@ -18,7 +29,9 @@ from .utils import nice_exc_args, is_prefix, is_suffix, name_of, signature
 
 class CallableABCMeta(ABCMeta):
     def __subclasscheck__(self, subclass):
-        return super().__subclasscheck__(subclass) or callable(getattr(subclass, "__call__", None))
+        return super().__subclasscheck__(subclass) or callable(
+            getattr(subclass, "__call__", None)
+        )
 
     def __instancecheck__(self, instance):
         return callable(instance)
@@ -66,14 +79,14 @@ def is_staticmethod(cls, attr):
 def is_classmethod(cls, attr):
     cls = _typeof(cls)
     method = getattr(object.__new__(cls), attr)
-    return getattr(method, '__self__', None) is cls
+    return getattr(method, "__self__", None) is cls
 
 
 def is_method(cls, attr):
     cls = _typeof(cls)
     inst = object.__new__(cls)
     method = getattr(inst, attr)
-    return getattr(method, '__self__', None) is inst
+    return getattr(method, "__self__", None) is inst
 
 
 def funcname(f, qualified=False):
@@ -90,7 +103,11 @@ def funcname(f, qualified=False):
 
 def function_classpath(f):
     mod = f.__module__
-    return f.__qualname__ if mod == "builtins" else "{}.{}".format(mod, funcname(f, qualified=True))
+    return (
+        f.__qualname__
+        if mod == "builtins"
+        else "{}.{}".format(mod, funcname(f, qualified=True))
+    )
 
 
 def constructor_signature(t: Union[type, Callable]):
@@ -131,7 +148,9 @@ def get_globals_func_attr(f: Callable):
     return get_globals(func)
 
 
-def fully_concrete_signature(f: Callable, from_method: bool = False, tvar_map: Optional[Mapping] = None):
+def fully_concrete_signature(
+    f: Callable, from_method: bool = False, tvar_map: Optional[Mapping] = None
+):
     if tvar_map is not None:
         # for lru_cache on _fully_concrete_signature helper
         tvar_map = tuple(tvar_map.items())
@@ -139,7 +158,9 @@ def fully_concrete_signature(f: Callable, from_method: bool = False, tvar_map: O
 
 
 @lru_cache(None)
-def _fully_concrete_signature(f: Callable, from_method: bool = False, tvar_map: Optional[Tuple] = None):
+def _fully_concrete_signature(
+    f: Callable, from_method: bool = False, tvar_map: Optional[Tuple] = None
+):
     if tvar_map is not None:
         tvar_map = dict(tvar_map)
     # handles classes and functions
@@ -147,8 +168,14 @@ def _fully_concrete_signature(f: Callable, from_method: bool = False, tvar_map: 
     if from_method:
         sig = to_bound_method_signature(sig)
     globals_ = get_globals(f)
-    new_sig = Signature([param.replace(annotation=fully_concretize_type(param.annotation, tvar_map, globals_))
-                         for param in sig.parameters.values()])
+    new_sig = Signature(
+        [
+            param.replace(
+                annotation=fully_concretize_type(param.annotation, tvar_map, globals_)
+            )
+            for param in sig.parameters.values()
+        ]
+    )
     return new_sig
 
 
@@ -160,7 +187,9 @@ def to_signature(obj: Union[Callable, Signature, BoundArguments]) -> Signature:
     return signature(obj)
 
 
-def to_parameters(obj: Union[Callable, Signature, MappingProxyType]) -> MappingProxyType:
+def to_parameters(
+    obj: Union[Callable, Signature, MappingProxyType]
+) -> MappingProxyType:
     if isinstance(obj, MappingProxyType):
         return obj
     sig = to_signature(obj)
@@ -173,7 +202,9 @@ def to_bound_args_dict(obj: Union[OrderedDict, BoundArguments]) -> OrderedDict:
     return obj.arguments
 
 
-def to_bound_method_signature(obj: Union[Callable, Signature, MappingProxyType, list, tuple]):
+def to_bound_method_signature(
+    obj: Union[Callable, Signature, MappingProxyType, list, tuple]
+):
     if isinstance(obj, (list, tuple)):
         return Signature(obj[1:])
     return Signature(list(to_parameters(obj).values())[1:])
@@ -183,7 +214,9 @@ def call_with(f, bound_args_: BoundArguments):
     return f(*bound_args_.args, **bound_args_.kwargs)
 
 
-def bind(sig: Union[Signature, Callable], args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> BoundArguments:
+def bind(
+    sig: Union[Signature, Callable], args: Tuple[Any, ...], kwargs: Dict[str, Any]
+) -> BoundArguments:
     if kwargs is None:
         kwargs = {}
 
@@ -193,8 +226,14 @@ def bind(sig: Union[Signature, Callable], args: Tuple[Any, ...], kwargs: Dict[st
     return bound
 
 
-def bind_verbosely(sig: Union[Callable, Signature], args: Tuple[Any, ...], kwargs: Dict[str, Any],
-                   *, apply_defaults=True, name=None) -> BoundArguments:
+def bind_verbosely(
+    sig: Union[Callable, Signature],
+    args: Tuple[Any, ...],
+    kwargs: Dict[str, Any],
+    *,
+    apply_defaults=True,
+    name=None
+) -> BoundArguments:
     if kwargs is None:
         kwargs = {}
 
@@ -217,65 +256,98 @@ def bind_verbosely(sig: Union[Callable, Signature], args: Tuple[Any, ...], kwarg
     return bound
 
 
-def validate_overrides(wrapper, wrapped, wrapper_is_method, wrapped_is_method,
-                       enforce_kinds=True, enforce_positional_order=False,
-                       enforce_positional_prefix=True):
+def validate_overrides(
+    wrapper,
+    wrapped,
+    wrapper_is_method,
+    wrapped_is_method,
+    enforce_kinds=True,
+    enforce_positional_order=False,
+    enforce_positional_prefix=True,
+):
     old_params, new_params = (to_parameters(f) for f in (wrapped, wrapper))
 
-    old_pos, new_pos, old_kw, new_kw = (params_of_kind(ps, k, names_only=True)
-                                        for ps, k in [(old_params, (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)),
-                                                      (new_params, (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)),
-                                                      (old_params, Parameter.KEYWORD_ONLY),
-                                                      (new_params, Parameter.KEYWORD_ONLY),
-                                                      ]
-                                        )
+    old_pos, new_pos, old_kw, new_kw = (
+        params_of_kind(ps, k, names_only=True)
+        for ps, k in [
+            (old_params, (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)),
+            (new_params, (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)),
+            (old_params, Parameter.KEYWORD_ONLY),
+            (new_params, Parameter.KEYWORD_ONLY),
+        ]
+    )
 
-    old_varpos, new_varpos, old_varkw, new_varkw = (getter(params)
-                                                    for params, getter in [(old_params, varargs_name),
-                                                                           (new_params, varargs_name),
-                                                                           (old_params, varkwargs_name),
-                                                                           (new_params, varkwargs_name)
-                                                                           ]
-                                                    )
+    old_varpos, new_varpos, old_varkw, new_varkw = (
+        getter(params)
+        for params, getter in [
+            (old_params, varargs_name),
+            (new_params, varargs_name),
+            (old_params, varkwargs_name),
+            (new_params, varkwargs_name),
+        ]
+    )
 
-    old_pos, new_pos = (t[1:] if is_method else t for t, is_method in [(old_pos, wrapped_is_method),
-                                                                       (new_pos, wrapper_is_method)
-                                                                       ])
+    old_pos, new_pos = (
+        t[1:] if is_method else t
+        for t, is_method in [(old_pos, wrapped_is_method), (new_pos, wrapper_is_method)]
+    )
 
-    for old, new, kind, star in [(old_varpos, new_varpos, 'positional', '*'), (old_varkw, new_varkw, 'keyword', '**')]:
+    for old, new, kind, star in [
+        (old_varpos, new_varpos, "positional", "*"),
+        (old_varkw, new_varkw, "keyword", "**"),
+    ]:
         if old is not None and new is None:
-            raise WrapperSignatureError("{wrapped} has variable {kind} args {star}{old} but {wrapper} does not"
-                                        .format(wrapped=wrapped, wrapper=wrapper, star=star, old=old, kind=kind))
+            raise WrapperSignatureError(
+                "{wrapped} has variable {kind} args {star}{old} but {wrapper} does not".format(
+                    wrapped=wrapped, wrapper=wrapper, star=star, old=old, kind=kind
+                )
+            )
 
     if not set(new_pos).issuperset(old_pos) and new_varpos is None:
-        raise WrapperSignatureError("{wrapper}'s positional args {new_pos} do not contain all of {wrapped}'s "
-                                    "positional args {old_pos}, and no *varargs are present in {wrapper}'s signature "
-                                    "to pass to {wrapped}".format(**locals()))
+        raise WrapperSignatureError(
+            "{wrapper}'s positional args {new_pos} do not contain all of {wrapped}'s "
+            "positional args {old_pos}, and no *varargs are present in {wrapper}'s signature "
+            "to pass to {wrapped}".format(**locals())
+        )
 
     if not set(new_kw).issuperset(old_kw) and new_varkw is None:
-        raise WrapperSignatureError("{wrapper}'s keyword args {new_kw} do not contain all of {wrapped}'s "
-                                    "keyword args {old_kw}, and no **varkwargs are present in {wrapper}'s signature "
-                                    "to pass to {wrapped}".format(**locals()))
+        raise WrapperSignatureError(
+            "{wrapper}'s keyword args {new_kw} do not contain all of {wrapped}'s "
+            "keyword args {old_kw}, and no **varkwargs are present in {wrapper}'s signature "
+            "to pass to {wrapped}".format(**locals())
+        )
 
     if enforce_kinds:
-        pos_violations, kw_violations = set(new_pos).intersection(old_kw), set(new_kw).intersection(old_pos)
+        pos_violations, kw_violations = (
+            set(new_pos).intersection(old_kw),
+            set(new_kw).intersection(old_pos),
+        )
 
         if pos_violations or kw_violations:
             both = pos_violations and kw_violations
-            raise WrapperSignatureError("{} of {} are attempting to override {} of {}{}"
-                                        .format(" and ".join(temp.format(vs) for temp, vs in
-                                                             [("positional args {}", pos_violations),
-                                                              ("keyword args {}", kw_violations)]
-                                                             if vs),
-                                                wrapper,
-                                                " and ".join(temp.format(vs) for temp, vs in
-                                                             [("keyword args {}", pos_violations),
-                                                              ("positional args {}", kw_violations)]
-                                                             if vs),
-                                                wrapped,
-                                                ", respectively" if both else ""
-                                                )
-                                        )
+            raise WrapperSignatureError(
+                "{} of {} are attempting to override {} of {}{}".format(
+                    " and ".join(
+                        temp.format(vs)
+                        for temp, vs in [
+                            ("positional args {}", pos_violations),
+                            ("keyword args {}", kw_violations),
+                        ]
+                        if vs
+                    ),
+                    wrapper,
+                    " and ".join(
+                        temp.format(vs)
+                        for temp, vs in [
+                            ("keyword args {}", pos_violations),
+                            ("positional args {}", kw_violations),
+                        ]
+                        if vs
+                    ),
+                    wrapped,
+                    ", respectively" if both else "",
+                )
+            )
 
     if enforce_positional_prefix:
         # Require wrapped's positional arguments to be placed at the end of the wrapper's positional argument
@@ -288,32 +360,67 @@ def validate_overrides(wrapper, wrapped, wrapper_is_method, wrapped_is_method,
         # in all trailing args being keyword-only.
         old_pos_order = tuple(n for n in new_pos if n in old_pos)
 
-        if not is_suffix(old_pos_order, new_pos) or not is_prefix(old_pos_order, old_pos):
-            prefixerr = '' if is_prefix(old_pos_order, old_pos) \
-                else "{old_pos_order} is not a prefix of {wrapped}'s positional args {old_pos}".format(**locals())
-            suffixerr = '' if is_suffix(old_pos_order, new_pos) \
-                else ("{con} a suffix of {wrapper}'s positional args {new_pos}"
-                      .format(con=" or" if prefixerr else "{} is not".format(old_pos_order), **locals()))
+        if not is_suffix(old_pos_order, new_pos) or not is_prefix(
+            old_pos_order, old_pos
+        ):
+            prefixerr = (
+                ""
+                if is_prefix(old_pos_order, old_pos)
+                else "{old_pos_order} is not a prefix of {wrapped}'s positional args {old_pos}".format(
+                    **locals()
+                )
+            )
+            suffixerr = (
+                ""
+                if is_suffix(old_pos_order, new_pos)
+                else (
+                    "{con} a suffix of {wrapper}'s positional args {new_pos}".format(
+                        con=" or" if prefixerr else "{} is not".format(old_pos_order),
+                        **locals()
+                    )
+                )
+            )
 
-            raise WrapperSignatureError("{wrapper} overrides positional args {old_pos} from {wrapped} but "
-                                        "{prefixerr}{suffixerr}".format(**locals()))
+            raise WrapperSignatureError(
+                "{wrapper} overrides positional args {old_pos} from {wrapped} but "
+                "{prefixerr}{suffixerr}".format(**locals())
+            )
     elif enforce_positional_order:
         # Strictly less strict than enforce_positional_prefix, so we don't have to compute this in that case
         new_pos_order = tuple(n for n in new_pos if n in old_pos)
         old_pos_order = tuple(n for n in old_pos if n in new_pos)
         if new_pos_order != old_pos_order:
-            raise WrapperSignatureError("{} is attempting to reorder {}'s positional arguments {} to {}"
-                                        .format(wrapper, wrapped, old_pos_order, new_pos_order))
+            raise WrapperSignatureError(
+                "{} is attempting to reorder {}'s positional arguments {} to {}".format(
+                    wrapper, wrapped, old_pos_order, new_pos_order
+                )
+            )
 
-    return (new_pos, new_varpos, new_kw, new_varkw), (old_pos, old_varpos, old_kw, old_varkw)
+    return (
+        (new_pos, new_varpos, new_kw, new_varkw),
+        (old_pos, old_varpos, old_kw, old_varkw),
+    )
 
 
-def merged_signature(wrapper, wrapped, wrapper_is_method, wrapped_is_method, *,
-                     return_arg_names=False, enforce_kinds=True, enforce_positional_prefix=False):
+def merged_signature(
+    wrapper,
+    wrapped,
+    wrapper_is_method,
+    wrapped_is_method,
+    *,
+    return_arg_names=False,
+    enforce_kinds=True,
+    enforce_positional_prefix=False
+):
     wrapper_params, wrapped_params = to_parameters(wrapper), to_parameters(wrapped)
-    wrapper_names, wrapped_names = validate_overrides(wrapper, wrapped, wrapper_is_method, wrapped_is_method,
-                                                      enforce_kinds=enforce_kinds,
-                                                      enforce_positional_prefix=enforce_positional_prefix)
+    wrapper_names, wrapped_names = validate_overrides(
+        wrapper,
+        wrapped,
+        wrapper_is_method,
+        wrapped_is_method,
+        enforce_kinds=enforce_kinds,
+        enforce_positional_prefix=enforce_positional_prefix,
+    )
     new_pos, new_varpos, new_kw, new_varkw = wrapper_names
     old_pos, old_varpos, old_kw, old_varkw = wrapped_names
     new_params = []
@@ -344,12 +451,14 @@ def merged_signature(wrapper, wrapped, wrapper_is_method, wrapped_is_method, *,
         return sig, wrapper_names, wrapped_names
 
 
-def params_of_kind(params, kind: Union[int, Sequence[int], Set[int]], filter_=None, names_only=False):
+def params_of_kind(
+    params, kind: Union[int, Sequence[int], Set[int]], filter_=None, names_only=False
+):
     if not isinstance(params, Iterable):
         params = to_parameters(params)
 
     if isinstance(params, MappingProxyType):
-            params = params.values()
+        params = params.values()
 
     if isinstance(kind, int):
         kind = (kind,)
@@ -369,11 +478,15 @@ def leading_positionals(params, names_only=False):
         params = to_parameters(params)
 
     if isinstance(params, MappingProxyType):
-            params = params.values()
+        params = params.values()
 
     def inner(params):
         for p in params:
-            if p.kind in (Parameter.VAR_POSITIONAL, Parameter.KEYWORD_ONLY, Parameter.VAR_KEYWORD):
+            if p.kind in (
+                Parameter.VAR_POSITIONAL,
+                Parameter.KEYWORD_ONLY,
+                Parameter.VAR_KEYWORD,
+            ):
                 break
             yield p
 
@@ -411,7 +524,11 @@ def varargs_name(sig):
 
     param = None
     for param in params.values():
-        if param.kind in (Parameter.VAR_POSITIONAL, Parameter.KEYWORD_ONLY, Parameter.VAR_KEYWORD):
+        if param.kind in (
+            Parameter.VAR_POSITIONAL,
+            Parameter.KEYWORD_ONLY,
+            Parameter.VAR_KEYWORD,
+        ):
             break
 
     return param.name if param.kind == Parameter.VAR_POSITIONAL else None
@@ -433,9 +550,12 @@ def _argnames(func, skip_first, required):
 
     filter_ = is_required if required else None
 
-    return params_of_kind(params, (Parameter.KEYWORD_ONLY, Parameter.POSITIONAL_OR_KEYWORD),
-                          filter_=filter_,
-                          names_only=True)
+    return params_of_kind(
+        params,
+        (Parameter.KEYWORD_ONLY, Parameter.POSITIONAL_OR_KEYWORD),
+        filter_=filter_,
+        names_only=True,
+    )
 
 
 def is_required(param: Parameter):
@@ -499,6 +619,7 @@ def get_callable_params(params):
                     continue
                 memo.add(p)
                 yield p
+
     return tuple(inner(p.annotation for p in params.values()))
 
 
@@ -517,7 +638,9 @@ def call_repr(name, sig, bound, varpos_name=Missing, varkw_name=Missing):
         varpos_name = varargs_name(sig.parameters)
 
     if varpos_name is not None:
-        pos_names = params_of_kind(sig.parameters, Parameter.POSITIONAL_OR_KEYWORD, names_only=True)
+        pos_names = params_of_kind(
+            sig.parameters, Parameter.POSITIONAL_OR_KEYWORD, names_only=True
+        )
         pos = (args_dict.pop(n) for n in pos_names)
         args = tuple(chain(pos, args_dict.pop(varpos_name)))
     else:
@@ -525,18 +648,24 @@ def call_repr(name, sig, bound, varpos_name=Missing, varkw_name=Missing):
 
     kwargs = args_dict.pop(varkw_name) if varkw_name is not None else {}
 
-    return "{}({})".format(name,
-                           ", ".join(f(a) for f, a in [(args_repr, args),
-                                                       (kwargs_repr, args_dict),
-                                                       (kwargs_repr, kwargs)
-                                                       ]
-                                     if a
-                                     )
-                           )
+    return "{}({})".format(
+        name,
+        ", ".join(
+            f(a)
+            for f, a in [
+                (args_repr, args),
+                (kwargs_repr, args_dict),
+                (kwargs_repr, kwargs),
+            ]
+            if a
+        ),
+    )
 
 
 def kwargs_repr(kwargs: Union[Mapping, Iterable[Tuple[str, Any]]]):
-    items = sorted(kwargs.items() if isinstance(kwargs, MappingABC) else kwargs, key=itemgetter(0))
+    items = sorted(
+        kwargs.items() if isinstance(kwargs, MappingABC) else kwargs, key=itemgetter(0)
+    )
     return ", ".join("{}={}".format(k, repr(v)) for k, v in items)
 
 

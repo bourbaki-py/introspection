@@ -8,8 +8,14 @@ from .compat import get_generic_origin, get_generic_params, EVALUATE_DEFAULT
 from .compat import ForwardRef, CallableSignature
 from .abcs import LazyType, PseudoGenericMeta
 from ..debug import trace
-from .inspection import (is_callable_origin, is_top_type, is_newtype, get_generic_args, normalized_origin_args,
-                         is_named_tuple_class)
+from .inspection import (
+    is_callable_origin,
+    is_top_type,
+    is_newtype,
+    get_generic_args,
+    normalized_origin_args,
+    is_named_tuple_class,
+)
 
 _newtype_cache = {}
 
@@ -26,11 +32,19 @@ def _get_generic_args(tup, evaluate=EVALUATE_DEFAULT):
 
 # main helper - evaluates forward refs, substitutes concrete constraint types or specified type args for type vars
 
-def fully_concretize_type(t: Type, param_dict: Optional[Mapping[Any, Type]], globals_: Optional[Mapping[str, Any]]):
-    return concretize_typevars(reparameterize_generic(eval_forward_refs(t, globals_), param_dict))
+
+def fully_concretize_type(
+    t: Type,
+    param_dict: Optional[Mapping[Any, Type]],
+    globals_: Optional[Mapping[str, Any]],
+):
+    return concretize_typevars(
+        reparameterize_generic(eval_forward_refs(t, globals_), param_dict)
+    )
 
 
 # materialize delayed string references (forward refs) in type annotations
+
 
 def eval_forward_refs(t, globals_, dont_recurse=()):
     if t in dont_recurse:
@@ -40,7 +54,9 @@ def eval_forward_refs(t, globals_, dont_recurse=()):
     if isinstance(t, str):
         return eval(t, globals_)
 
-    org, args, fixlen = normalized_origin_args(t, remove_tuple_ellipsis=False, extract_namedtuple_args=True)
+    org, args, fixlen = normalized_origin_args(
+        t, remove_tuple_ellipsis=False, extract_namedtuple_args=True
+    )
 
     if not args:
         return org
@@ -70,6 +86,7 @@ def eval_forward_refs(t, globals_, dont_recurse=()):
 
 
 # turn a (generic, *args) tuple into a fully evaluated generic type
+
 
 @singledispatch
 def eval_type_tree(t):
@@ -123,6 +140,7 @@ def eval_args(tup):
 # turn a generic type whose type tree may contain type variables into a concrete type by substituting appropriate
 # most-general types for type variables
 
+
 def constraint_type(tvar: TypeVar):
     ts = get_constraints(tvar)
     if ts:
@@ -147,7 +165,9 @@ def concretize_typevars(t: type, dont_recurse=()):
     if t in dont_recurse:
         return t
 
-    org, args, _ = normalized_origin_args(t, remove_tuple_ellipsis=False, extract_namedtuple_args=True)
+    org, args, _ = normalized_origin_args(
+        t, remove_tuple_ellipsis=False, extract_namedtuple_args=True
+    )
     if not args:
         if org is Type:
             return Type[Any]
@@ -184,6 +204,7 @@ def concretize_typevars_signature(sig: CallableSignature, dont_recurse=()):
 
 # turn a fully evaluated generic type into a (generic, *args) tuple
 
+
 @lru_cache(None)
 def deconstruct_generic(t):
     if isinstance(t, TypeVar):
@@ -215,6 +236,7 @@ reconstruct_generic = eval_type_tree
 
 # substitute types for corresponding type vars in a generic type recursively
 
+
 @trace
 def reparameterize_generic(t, tvar_map, evaluate=True):
     if not tvar_map:
@@ -226,18 +248,24 @@ def reparameterize_generic(t, tvar_map, evaluate=True):
 
     if is_callable_origin(base_org):
         # if evaluate == True, we get a 2-tuple, else a (*sig_types, return_type) tuple
-        sig, ret = (base_args if evaluate else (base_args[:-1], base_args[-1]))
+        sig, ret = base_args if evaluate else (base_args[:-1], base_args[-1])
         if sig is not Ellipsis:
-            sig = CallableSignature(tvar_map.get(a, reparameterize_generic(a, tvar_map)) for a in sig)
+            sig = CallableSignature(
+                tvar_map.get(a, reparameterize_generic(a, tvar_map)) for a in sig
+            )
         new_args = sig, reparameterize_generic(ret, tvar_map)
     else:
-        new_args = tuple(tvar_map.get(arg, reparameterize_generic(arg, tvar_map)) for arg in base_args)
+        new_args = tuple(
+            tvar_map.get(arg, reparameterize_generic(arg, tvar_map))
+            for arg in base_args
+        )
 
     type_tup = (base_org, *new_args)
     return eval_type_tree(type_tup) if evaluate else type_tup
 
 
 # get mapping from type var to type arg from a parameterized generic
+
 
 def get_param_dict(t):
     args = get_generic_args(t)
