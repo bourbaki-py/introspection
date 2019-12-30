@@ -1,7 +1,8 @@
 # coding:utf-8
 import typing
 import enum
-from .inspection import is_top_type, is_named_tuple_class
+from .inspection import is_top_type, is_named_tuple_class, is_concrete_type, get_generic_args
+from .compat import typetypes
 
 STDLIB_MODULES = {"builtins", "collections", "typing", "abc", "numbers", "decimal", "re", "_sre", "os",
                   "enum", "datetime", "time", "pathlib", "ipaddress", "urllib", "uuid"}
@@ -45,13 +46,33 @@ class NonCollection(metaclass=NonCollectionMeta):
 
 
 class NonStrCollectionMeta(_InstanceCheckFromSubclassCheck):
+    """This is a subtype of `coll_type` by implication of only admitting as concrete subtypes a subset
+    of `coll_type`'s concretizations"""
+
     coll_type = typing.Collection
     non_subclasses = ()
 
     def __subclasscheck__(self, subclass):
         if subclass is self:
             return True
-        return issubclass(subclass, self.coll_type) and not any(_issubclass_gen(subclass, self.non_subclasses))
+
+        if subclass is self.coll_type:
+            return False
+
+        if isinstance(subclass, type(self)):
+            # if subclass shares the same metaclass as self,
+            # and any explicit base of subclass is a subclass of self, then subclass _is_ a subtype
+            return any(issubclass(base, self) for base in getattr(subclass, '__bases__', ()))
+
+        if any(issubclass(base, subclass) for base in self.__bases__):
+            # anything above this type's explicit bases is _not_ a subtype
+            return False
+
+        if issubclass(subclass, self.coll_type):
+            # if subclass is a subclass of any of the explicit non_subclasses however, it is _not_ a subtype
+            return not any(_issubclass_gen(subclass, self.non_subclasses))
+
+        return False
 
 
 class NonStrCollection(metaclass=NonStrCollectionMeta):
@@ -59,8 +80,8 @@ class NonStrCollection(metaclass=NonStrCollectionMeta):
     pass
 
 
-class NonAnyStrCollection(metaclass=NonStrCollectionMeta):
-    non_subclasses = (str, bytes, typing.ByteString)
+class NonAnyStrCollection(NonStrCollection, metaclass=NonStrCollectionMeta):
+    non_subclasses = (str, typing.ByteString)
     pass
 
 
@@ -69,8 +90,8 @@ class NonStrSequence(NonStrCollection):
     coll_type = typing.Sequence
 
 
-class NonAnyStrSequence(NonAnyStrCollection):
-    non_subclasses = (str, bytes, typing.ByteString)
+class NonAnyStrSequence(NonStrSequence, NonAnyStrCollection):
+    non_subclasses = (str, typing.ByteString)
     coll_type = typing.Sequence
 
 

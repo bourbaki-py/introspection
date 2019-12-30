@@ -127,14 +127,16 @@ class mystr(str):
 
 abstract_classes_pos = [
     (Builtin, [int, str, list, tuple, bytes, set, frozenset, complex]),
-    (NonStrCollection, [list, tuple, set, frozenset, bytes, Tuple, List, Collection, Mapping, Set, ByteString]),
-    (NonAnyStrCollection, [list, tuple, set, frozenset, Tuple, List, Collection, Mapping, Set]),
+    (NonStdLib, [Foo, mystr]),
+    (NonStrCollection, [list, tuple, set, frozenset, bytes, Tuple, List, Mapping, Set, ByteString]),
+    (NonAnyStrCollection, [list, tuple, set, frozenset, Tuple, List, Mapping, Set]),
     (NonStrSequence, [list, tuple, bytes, Tuple, List, ByteString]),
     (NonAnyStrSequence, [list, tuple, Tuple, List]),
 ]
 
 abstract_classes_neg = [
     (Builtin, [collections_abc.Collection, Number, Any]),
+    (NonStdLib, [str, int, FooTuple]),
     (NonStrCollection, [str, mystr]),
     (NonAnyStrCollection, [str, mystr, bytes, ByteString]),
     (NonStrSequence, [str, mystr]),
@@ -233,12 +235,12 @@ def test_constraint_type(tvar, constraint):
 
 @pytest.mark.parametrize("base,type_", abstract_class_test_cases(abstract_classes_pos))
 def test_abstract_types_pos(base, type_):
-        assert issubclass(type_, base)
+    assert issubclass(type_, base)
 
 
 @pytest.mark.parametrize("base,type_", abstract_class_test_cases(abstract_classes_neg))
 def test_abstract_types_neg(base, type_):
-        assert not issubclass(type_, base)
+    assert not issubclass(type_, base)
 
 
 @pytest.mark.parametrize("base,type_", product([Mapping[int, str], Mapping[int, MyStr], Collection[int]],
@@ -270,6 +272,8 @@ def test_py36_fake_types(type1, type2, pos):
     (NonStrSequence, tuple),
     (NonStrSequence, bytes),
     (NonAnyStrSequence, tuple),
+    (NonStrSequence, NonAnyStrSequence),
+    (NonStrCollection, NonAnyStrCollection),
     (Builtin, bool),
     (Builtin, frozenset),
     (BuiltinAtomic, str),
@@ -303,6 +307,14 @@ def test_abc_has_subclass(abc, cls):
     (NonCollection, frozenset),
     (NonCollection, tuple),
     (NamedTupleABC, tuple),
+    (NonAnyStrCollection, NonStrCollection),
+    (NonAnyStrSequence, NonStrSequence),
+    (NonStrCollection, Collection),
+    (NonAnyStrCollection, Collection),
+    (NonStrSequence, Sequence),
+    (NonStrSequence, Collection),
+    (NonAnyStrSequence, Sequence),
+    (NonAnyStrSequence, Collection),
 ])
 def test_abc_does_not_have_subclass(abc, cls):
     assert not issubclass(cls, abc)

@@ -50,6 +50,8 @@ def reparameterized_bases(t, recurse=True, evaluate=EVALUATE_DEFAULT, concretize
                     yield from reparameterized_bases(new_base, recurse=recurse, evaluate=evaluate, memo=memo)
     else:
         # no args but there may be generic bases!
+        if concretize:
+            bases = map(concretize_typevars, bases)
         for base in bases:
             memo.add(base)
             yield base
