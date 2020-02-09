@@ -1,39 +1,9 @@
 # coding:utf-8
 from inspect import signature, Parameter
-from functools import wraps, update_wrapper, lru_cache
-import dask
-from .callables import bind, call_with, name_of
+from functools import update_wrapper, lru_cache
+from .callables import name_of
 
 empty = Parameter.empty
-
-
-class ArgPreparer:
-    def __init__(self, dask_graph, null_value=None):
-        if not isinstance(dask_graph, dict) or not all(
-            isinstance(k, str) for k in dask_graph
-        ):
-            raise ValueError(
-                "dask_graph must be a dictionary as accepted by "
-                "dask.get, whose keys are argument names in the "
-                "signature of the function being wrapped"
-            )
-        self.graph = dask_graph
-        self.null_value = null_value
-
-    def __call__(self, f):
-        @wraps(f)
-        def new_f(*args, **kwargs):
-            graph = self.graph.copy()
-            null = self.null_value
-            bound = bind(f, args, kwargs)
-            bound_ = bound.arguments
-
-            update_these = {k for k, v in bound_.items() if v is null and k in graph}
-            graph.update(tup for tup in bound_.items() if tup[0] not in update_these)
-            bound_.update(zip(update_these, dask.get(graph, list(update_these))))
-            return call_with(f, bound)
-
-        return new_f
 
 
 def lru_cache_sig_preserving(*args, **kwargs):

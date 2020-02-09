@@ -1,41 +1,11 @@
 #coding:utf-8
 import pytest
-from operator import attrgetter
 from inspect import signature
-from bourbaki.introspection.wrappers import ArgPreparer
 from bourbaki.introspection.subclassing import subclass_mutator_method, subclass_method
 from bourbaki.introspection.simple_repr import with_simple_repr
 from bourbaki.introspection.object_models.scala import MultipleInheritanceError, ScalaClass, val, var
 from bourbaki.introspection.typechecking import type_checker
 from typing import List, Tuple, Set, Sequence
-
-
-@pytest.fixture(scope="module")
-def dask_graph():
-    return dict(
-        a="x",
-        b=(attrgetter('val'), 'self'),
-        c=(sum, ["a", "b"]),
-        d=4,
-        x=1,
-    )
-
-
-@pytest.fixture(scope="module")
-def prep(dask_graph):
-    return ArgPreparer(dask_graph)
-
-
-@pytest.fixture(scope="module")
-def ClassWithArgPreparer(prep):
-    class Foo:
-        val = 2
-
-        @prep
-        def f(self, first=None, *args, a=None, b=None, c=None, d=None):
-            return first, args, a, b, c, d
-
-    return Foo
 
 
 @pytest.fixture(scope="module")
@@ -97,12 +67,6 @@ def Bar(Foo):
 @pytest.fixture
 def bar(Bar):
     return Bar(4, 1, b=2, c=3)
-
-
-def test_arg_preparer(ClassWithArgPreparer):
-    foo = ClassWithArgPreparer()
-    tup = foo.f()
-    assert tup == (None, (), 1, 2, 3, 4)
 
 
 def test_SubclassMutator_init(bar):
