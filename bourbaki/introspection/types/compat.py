@@ -15,7 +15,6 @@ from typing_inspect import (
 )
 from ..debug import trace
 
-
 NON_TYPING_STDLIB_MODULES = frozenset(
     (
         "builtins",
@@ -36,6 +35,8 @@ NON_TYPING_STDLIB_MODULES = frozenset(
     )
 )
 
+ForwardRef = None
+_GenericAlias = None
 
 if sys.version_info[:2] >= (3, 7):  # pragma: no cover
     from typing import ForwardRef, _GenericAlias

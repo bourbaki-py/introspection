@@ -4,7 +4,6 @@ from tempfile import mktemp
 from inspect import getmro
 from itertools import repeat
 from functools import singledispatch
-from graphviz import Digraph as Dot
 from .types.compat import NEW_TYPING
 from .types import get_generic_origin, get_generic_args, LazyType, ForwardRef
 
@@ -107,6 +106,12 @@ def inheritances(cls):
 
 
 def inheritance_hierarchy(cls):
+    try:
+        from graphviz import Digraph as Dot
+    except ImportError:
+        raise ImportError(
+            "visualization of inheritance hierarchies requires graphviz"
+        )
     d = Dot("Inheritance hierarchy for {}".format(classpath(cls)))
     d.edges((classpath(c1), classpath(c2)) for c1, c2 in inheritances(cls))
     return d
