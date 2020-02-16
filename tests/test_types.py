@@ -6,6 +6,7 @@ import collections
 from collections import abc as collections_abc
 import functools
 from numbers import Number, Integral, Real
+import sys
 from itertools import repeat, chain, product, combinations
 from bourbaki.introspection.types import deconstruct_generic, reconstruct_generic
 from bourbaki.introspection.types import (issubclass_generic, get_generic_params, deconstruct_generic,
@@ -50,10 +51,6 @@ class FooTuple(NamedTuple):
     bar: bool
     baz: MyStr
 
-newtype1 = NewType("newtype1", List[int])
-
-newtype2 = NewType("newtype2", newtype1)
-
 
 Hashable.register(Number)
 
@@ -65,8 +62,11 @@ atomic_chains = [
     (bytes, Union[str, bytes], Hashable),
     (Pattern[str], Pattern, Any),
     (Match[bytes], Match, Any),
-    (newtype2, newtype1, Collection[Number]),
 ]
+if sys.version_info >= (3, 7):
+    newtype1 = NewType("newtype1", List[int])
+    newtype2 = NewType("newtype2", newtype1)
+    atomic_chains.append((newtype2, newtype1, Collection[Number]))
 
 generic_chains = [
     (List, Sequence, Collection, Iterable),
