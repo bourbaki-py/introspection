@@ -1,5 +1,5 @@
 # coding:utf-8
-from typing import List, Tuple, Callable, Dict, Type, Union, Optional, Generic
+from typing import List, Tuple, Dict, Collection, Callable, Type, Union, Optional, Generic
 import re
 from tempfile import mktemp
 from itertools import chain, combinations
@@ -95,9 +95,12 @@ def _reconstruct_mapping(sigmap, type_=dict, values=False):
 
 
 class GenericTypeLevelDispatch:
-    _bottoms = None
-    _tops = None
-
+    """Dispatch on generic type signatures using the subtype relation. Functions registered with this dispatcher must
+    take _types_ as arguments, not values, since the generic type of a value is either expensive to infer or not
+    inferrable at runtime - i.e. whether [1, 2.3] is a List[Union[int,float]] or a List[numbers.Real].
+    Thus a function `f` registered for the signature (numbers.Number, Iterable[int]) would recieve the args
+    (int, List[bool]) directly if the dispatcher were called on those types and determined that `f` was the most
+    specific resolution for that signature via the subtype relation."""
     def __init__(self, name, isolated_bases: Optional[List[Type]] = None):
         self.name = self.__name__ = name
         self._cache = {}
@@ -186,6 +189,11 @@ class GenericTypeLevelDispatch:
             print("Found signature {} in {}._cache".format(sig, self.__name__))
         return f
 
+    def all_resolutions(self, *sig, debug: bool = False) -> List[Callable]:
+        sigs = list(self._resolve_iter(sig, debug=debug))
+        resolved_sigs = most_refined(sigs)
+        return [self.funcs[sig] for sig in resolved_sigs]
+
     def _resolve_iter(self, sig, debug=DEBUG):
         edge_predicate = verbose_call(refines) if debug else refines
         return (s for s in self.funcs if edge_predicate(sig, s))
@@ -194,15 +202,7 @@ class GenericTypeLevelDispatch:
         if len(nodes) == 0:
             raise UnknownSignature(self, sig)
         elif len(nodes) > 1:
-            refined = set()
-            for s1, s2 in combinations(nodes, 2):
-                if refines(s1, s2):
-                    refined.add(s2)
-                elif refines(s2, s1):
-                    refined.add(s1)
-
-            best = [node for node in nodes if node not in refined]
-
+            best = most_refined(nodes, refines)
             if self.isolated_bases:
                 best_ = self.isolated_bases.intersection(best)
                 if best_:
@@ -325,8 +325,12 @@ class GenericTypeLevelDispatch:
 
 
 class GenericTypeLevelSingleDispatch(GenericTypeLevelDispatch):
-    """Singly-dispatched version"""
-
+    """Singly-dispatched version. As in the multiply-dispatched version, the functions registered should take _types_ as
+    arguments, not values (for reasons discussed there), with one difference: for convenience, the functions registered
+    with this dispatcher are provided with positional args corresponding to the type constructor and its arguments. E.g.
+    a function registered for Mapping[numbers.Number, int] would recieve arguments (Dict, float, bool) if dispatched on
+    the type Dict[float, bool]. This saves the implementer some introspection of the types at the call site.
+    """
     def __call__(self, type_, **kwargs):
         sig = (type_,)
         f = self.resolve(sig)
@@ -354,3 +358,19 @@ def resolved_type_args(type_, resolved_type):
         resolved_type = type_
 
     return get_generic_args(resolved_type, evaluate=True)
+
+
+def most_refined(
+    sigs: Collection[Signature],
+    refines: Callable[[Signature, Signature], bool] = refines,
+) -> List[Signature]:
+    """Return the most specific signatures in an iterable of possible resolutions, i.e. the bottom signatures in the
+    poset on signatures induced by the refinement relation"""
+    refined = set()
+    for s1, s2 in combinations(sigs, 2):
+        if refines(s1, s2):
+            refined.add(s2)
+        elif refines(s2, s1):
+            refined.add(s1)
+
+    return [sig for sig in sigs if sig not in refined]
