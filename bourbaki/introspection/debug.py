@@ -3,7 +3,7 @@ import os
 from inspect import stack
 from warnings import warn
 
-INTROSPECTION_DEBUG_ENV_VAR = "INTROSPECTION_DEBUG"
+INTROSPECTION_DEBUG_ENV_VAR = "BOURBAKI_INTROSPECTION_DEBUG"
 
 
 def _trace(f):  # pragma: no cover
