@@ -1,5 +1,5 @@
 # coding:utf-8
-from typing import List, Tuple, Dict, Collection, Callable, Type, Union, Optional, Generic
+from typing import List, Tuple, Dict, Collection, Callable, Type, Union, Optional, Generic, Any
 import re
 from tempfile import mktemp
 from itertools import chain, combinations
@@ -151,7 +151,7 @@ class GenericTypeLevelDispatch:
 
     def register_from_mapping(
         self,
-        sigmap: Dict[Union[Signature, Type], Callable],
+        sigmap: Dict[Union[Signature, Type], Union[Callable, Any]],
         debug: bool = DEBUG,
         as_const: bool = False,
     ):
