@@ -17,4 +17,4 @@ from .typechecking import type_checker
 from .types import issubclass_generic
 from .wrappers import cached_getter, lru_cache_sig_preserving
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
