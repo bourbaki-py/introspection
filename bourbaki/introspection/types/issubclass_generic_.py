@@ -172,8 +172,15 @@ def _issubclass(t1, t2):
     try:
         return issubclass(to_concrete_type(t1), t2)
     except Exception as e:
-        print("_issubclass({}, {}) -> {}".format(t1, t2, e), file=sys.stderr)
-        raise e
+        if is_newtype(t1):
+            if is_newtype(t2):
+                return _issubclass_newtype_newtype(t1, t2)
+            return issubclass_generic(base_newtype_of(t1), t2)
+        elif is_newtype(t2):
+            return False
+        else:
+            print("_issubclass({}, {}) -> {}".format(t1, t2, e), file=sys.stderr)
+            raise e
 
 
 def _issubclass_union_any(types, t):

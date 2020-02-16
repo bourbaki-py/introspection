@@ -60,7 +60,10 @@ if sys.version_info[:2] >= (3, 7):  # pragma: no cover
         typing.ByteString: (Union[int, bytes, bytearray],),
     }
 
-    abstract_types = (typing._Protocol, typing.Generic)
+    if sys.version_info >= (3, 8):
+        abstract_types = (typing.Protocol, typing.Generic)
+    else:
+        abstract_types = (typing._Protocol, typing.Generic)
     generics = {
         t
         for t in vars(typing).values()
