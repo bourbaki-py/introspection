@@ -10,8 +10,9 @@ from bourbaki.introspection.imports import (import_object, object_from, import_t
 try:
     site_packages = site.getsitepackages()[0]
 except AttributeError:
-    # travis runs in virtualenv with fixed older version of site
-    site_packages = site.getusersitepackages()
+    # travis runs in virtualenv with fixed older version of site.
+    # Not a crucial feature to test imports off of the python path anyway.
+    site_packages = None
 
 
 def func():
