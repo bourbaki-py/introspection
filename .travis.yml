@@ -1,11 +1,15 @@
 language: python
 python:
-  - "3.8"
-  - "3.7"
-  - "3.6"
-  - "3.5"
+- '3.8'
+- '3.7'
+- '3.6'
+- '3.5'
 install:
-  - python setup.py install
+- python setup.py install
 script:
-  - python setup.py test
-
+- python setup.py test
+deploy:
+  provider: pypi
+  user: __token__
+  password:
+    secure: OZCwxDKFzRB20Sc7cu7FU0cM+UvimpiwFmdczwMCMbMulZS9VWENTulXfxa3hnmslCu3y/fTUpGDqQ7H/oXSUe5YYoBemmZwaG91duvJCFxrP/UYOvQWh7O4R5r4JP1KxbN8o363TO5Z2aciYvx1VqWl2KULoNAGx/Vt/FvF9b0xOSNJTqIwA5PDWLdAM7bsuRV4ktjDGHM/3UQ/IVaFAqzG1rb+hrNHOrF5OVI7fYay2CeZrqYvDNhbPUFsnDKnTjldCkHwchAafjIMTeflZ9E1qUi67xuw2vixYC2ZfsKgdOULUOfiPfjVOA6ygc7VZD+VcileVnYxqwV+4py51cLkAUtEW46AJ5XK0f50/U6OE4IMpYHCGaIExi7ZJUohTD6Hl+yKSZiHLRMgxTTydyurQDMM33vlXpW8hzR8e3lQZsSry96NOKZRcxOVhGd4dcqeHVGDqVfCPPp49MoJNUtpCtwTmOJP4UWu7u/elInP4GXh5IW5BhP0zzhM5kAZMTX+ywKLreHqOc984i6eXbTieuOYRsmQzB3xoPyp+N4r5zWZlzzNcFsclWInqXVlFC4ppoSdybKVhLcOBXaR6jgb9ETlzIJkRwCSEhxxo2cKX9VUdx3XZlrop6UoFyj8AUbW/OujvmqP5Zm3Jw52s/ZmdJIhCEmSKZjOpVuKstk=
