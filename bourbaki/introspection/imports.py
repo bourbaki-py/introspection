@@ -7,6 +7,7 @@ import ast
 from functools import singledispatch
 import os
 import re
+import sys
 from types import MethodType, FunctionType
 from functools import partial, update_wrapper
 from textwrap import indent
@@ -151,6 +152,18 @@ def _to_index_expr_ref(node: Union[ast.Attribute, ast.Name]) -> Tuple[str, ...]:
 @_to_index_expr.register(ast.Ellipsis)
 def _to_index_expr_ellipsis(node: ast.Ellipsis) -> Tuple[str, ...]:
     return ("...",)
+
+
+if sys.version_info >= (3, 8):
+    # python 3.8 made Ellipsis an instance of ast.Constant
+    @_to_index_expr.register(ast.Constant)
+    def _to_index_expr_ellipsis_constant(node: ast.Constant) -> Tuple[str, ...]:
+        if node.value is Ellipsis:
+            return ("...",)
+        else:
+            raise SyntaxError(
+                "{} is not a valid subexpression of a parameterized type expression".format(node.value),
+            )
 
 
 @_to_index_expr.register(ast.Tuple)
