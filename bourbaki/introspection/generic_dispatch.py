@@ -189,9 +189,17 @@ class GenericTypeLevelDispatch:
             print("Found signature {} in {}._cache".format(sig, self.__name__))
         return f
 
-    def all_resolutions(self, *sig, debug: bool = False) -> List[Callable]:
+    def all_resolutions(self, *sig, debug: bool = False) -> List[Signature]:
         sigs = list(self._resolve_iter(sig, debug=debug))
-        resolved_sigs = most_refined(sigs)
+        best = most_refined(sigs)
+        if self.isolated_bases:
+            best_ = self.isolated_bases.intersection(best)
+            if best_:
+                best = list(best_)
+        return best
+
+    def all_resolved_funcs(self, *sig, debug: bool = False) -> List[Callable]:
+        resolved_sigs = self.all_resolutions(*sig, debug=debug)
         return [self.funcs[sig] for sig in resolved_sigs]
 
     def _resolve_iter(self, sig, debug=DEBUG):
@@ -263,7 +271,7 @@ class GenericTypeLevelDispatch:
                 _ = self.resolve(target_sig)
             except AmbiguousResolutionError:
                 highlight_color = highlight_color_error
-                highlight_sigs = list(self._resolve_iter(target_sig))
+                highlight_sigs = self.all_resolutions(*target_sig)
             else:
                 highlight_sigs = [self._sig_cache[target_sig]]
         else:
