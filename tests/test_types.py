@@ -175,7 +175,10 @@ def _test_cases(generic_chain, atomic_chain, *extras, reverse=False):
 
 
 def _mapping_test_cases(mapping_chain, atomic_chain, key_types, reverse=False):
-    return _test_cases(mapping_chain, atomic_chain, *key_types, reverse=reverse)
+    tc = _test_cases(mapping_chain, atomic_chain, *key_types, reverse=reverse)
+    # if sys.version_info >= (3, 8):
+    #     tc = ((t1, t2) for t1, t2 in tc if t1 is not ChainMap[Pattern, newtype1])
+    return tc
 
 
 def all_test_cases(reverse=False):
