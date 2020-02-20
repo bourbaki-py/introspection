@@ -79,7 +79,7 @@ generic_chains = [
 key_types = list(set(chain.from_iterable(atomic_chains)))
 
 mapping_chains = [
-    (Dict, Mapping, Collection),
+    (Dict, Collection),
 ]
 
 tuple_chains = [
