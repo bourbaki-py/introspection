@@ -4,10 +4,7 @@ import enum
 from .inspection import (
     is_top_type,
     is_named_tuple_class,
-    is_concrete_type,
-    get_generic_args,
 )
-from .compat import typetypes
 
 STDLIB_MODULES = {
     "builtins",
