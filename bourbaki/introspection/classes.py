@@ -14,6 +14,7 @@ def classpath(t: type):
         return "Union"
     if org is Any:
         return "Any"
+
     if issubclass(org, LazyType):
         a = get_generic_args(t)[0]
         if isinstance(a, str):

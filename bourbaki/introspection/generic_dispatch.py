@@ -28,7 +28,7 @@ class UnknownSignature(TypeError, NotImplementedError):
         )
 
 
-class AmbiguousResolutionError(ValueError):
+class AmbiguousResolutionError(TypeError):
     def __str__(self):
         dispatcher, sig, sigs = self.args
         return "The dispatcher {} resolves the signature {} to multiple ambiguous signatures: {}".format(
