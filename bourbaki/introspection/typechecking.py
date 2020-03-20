@@ -102,6 +102,9 @@ class CallableTypeChecker:
         if not callable(func):
             return False
 
+        if not isinstance(func, self.callable_):
+            return False
+
         return_, signature_, empty = self.return_, self.signature_, Parameter.empty
 
         if (is_top_type(return_) or return_ is empty) and signature_ is Ellipsis:
