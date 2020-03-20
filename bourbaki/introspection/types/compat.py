@@ -13,6 +13,7 @@ from typing_inspect import (
     get_parameters,
     get_generic_bases as _get_generic_bases,
 )
+from ..utils import identity
 from ..debug import trace
 
 NON_TYPING_STDLIB_MODULES = frozenset(
@@ -337,12 +338,15 @@ def _set_typing_to_stdlib_constructor():
             typing.Counter: collections.Counter,
             typing.ChainMap: collections.ChainMap,
             typing.Deque: collections.deque,
+            typing.ByteString: bytes,
         }
     )
     for tname, type_ in [
         ("OrderedDict", collections.OrderedDict),
         ("_Pattern", re.compile),
         ("Pattern", re.compile),
+        ("TypedDict", dict),
+        ("Literal", identity),
     ]:
         t = getattr(typing, tname, None)
         if t is not None:
