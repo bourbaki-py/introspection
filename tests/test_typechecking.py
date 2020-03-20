@@ -1,6 +1,7 @@
 # coding:utf-8
 from typing import *
 from typing import Pattern, Match, ChainMap, Counter, TypeVar
+import types
 import pytest
 from numbers import Number, Integral
 
@@ -34,6 +35,8 @@ def g(a: myfloat, b: bool) -> Sequence[Number]:
     (f, Callable[[float, int], Sequence[int]]),
     (f, Callable[[myfloat, bool], Sequence[Number]]),
     (f, Callable[[myfloat, bool], Any]),
+    (f, types.FunctionType),
+    (sorted, types.BuiltinFunctionType),
 ])
 def test_callable_typechecker_pos(f, t):
     assert isinstance_generic(f, t)
@@ -46,6 +49,7 @@ def test_callable_typechecker_pos(f, t):
     (g, Callable[[float, int], List[int]]),
     (g, Callable[[float, int], Sequence[int]]),
     (g, Callable[[myfloat, bool], Sequence[Integral]]),
+    (g, types.BuiltinFunctionType),
 ])
 def test_callable_typechecker_neg(f, t):
     assert not isinstance_generic(f, t)
