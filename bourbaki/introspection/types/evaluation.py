@@ -109,7 +109,6 @@ def _eval_type_tree(tup):
         args = _eval_callable_args(args)
     else:
         args = _maybe_singleton(eval_args(args))
-
     return get_generic_origin(t)[args]
 
 
