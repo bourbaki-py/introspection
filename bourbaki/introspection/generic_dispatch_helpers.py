@@ -16,7 +16,6 @@ Empty = Parameter.empty
 
 class PicklableWithType:
     type_ = None
-    exc_cls = TypeError
 
     def __init__(self, type_, *args):
         self.type_ = reconstruct_generic((type_, *args))
@@ -175,10 +174,20 @@ def try_map(exc_type, f, it):
             yield result
 
 
+class AllFailed(ValueError):
+    pass
+
+
+class DisallowedException(ValueError):
+    pass
+
+
 class UnionWrapper(ReducingGenericWrapper):
     tolerate_errors = ()  # always raise with empty tuple in except clause
     tolerate_errors_call = (Exception,)
-    exc_class = ValueError
+    exc_class_bad_exception = DisallowedException
+    exc_class_no_success = AllFailed
+
     is_optional = False
 
     def __init__(self, union, *types):
@@ -198,21 +207,20 @@ class UnionWrapper(ReducingGenericWrapper):
 
     def call_iter(self, value):
         excs = []
-        results = []
+        ok_excs = []
+        results = False
         for f in self.funcs:
             try:
                 result = f(value)
-            except self.tolerate_errors_call:
-                pass
+            except self.tolerate_errors_call as e:
+                ok_excs.append(e)
             except Exception as e:
                 excs.append(e)
             else:
                 yield result
-                results.append(result)
-        if excs:
-            self.raise_(value, excs)
-        if not results:
-            self.raise_(value, None)
+                results = True
 
-    def raise_(self, value, exceptions):
-        raise self.exc_class(self.type_, value, exceptions)
+        if excs:
+            raise self.exc_class_bad_exception(*excs)
+        if not results:
+            raise self.exc_class_no_success(*ok_excs)
