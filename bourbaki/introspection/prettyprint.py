@@ -64,7 +64,7 @@ def fmt_pyobj(obj: Mapping, indent: str = "", prefix=(), top_level=False, memo=N
         repr_ = str
         template = "{}{}={}"
     else:
-        main_template = "{{\n{}\n{}}}"
+        main_template = "{{\n{},\n{}}}"
         template = "{}{}: {}"
         repr_ = repr
         joiner = ",\n"
