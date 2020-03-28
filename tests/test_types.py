@@ -51,6 +51,9 @@ class FooTuple(NamedTuple):
     bar: bool
     baz: MyStr
 
+class FooCallable(Generic[K]):
+    def __call__(self, x: Collection[K], y: str = 'y') -> K:
+        pass
 
 Hashable.register(Number)
 
@@ -90,7 +93,12 @@ tuple_chains = [
 callable_chains = [
     (Callable[[Any, Any], Union[Number, str]], Callable[[Number, Number], Hashable], Callable[[int, float], Any], Callable),
     (Callable[[Mapping[str, Hashable]], Number], Callable[[Mapping[str, Number]], Hashable], Callable[[Counter[str]], Any]),
-    (Callable[[Any, Number], bool], Callable[..., int], Callable[..., Number])
+    (Callable[[Any, Number], bool], Callable[..., int], Callable[..., Number]),
+    (FooCallable, Callable),
+    (FooCallable[int], Callable[[Collection[int], str], int]),
+    (FooCallable[int], Callable[[Collection[int], MyStr], int]),
+    (FooCallable[int], Callable[[Collection[bool]], Any]),
+    (FooCallable[Number], Callable[[List[float], MyStr], Number]),
 ]
 
 generic_constructors = [
