@@ -106,7 +106,7 @@ def inheritances(cls):
             yield from inheritances(c)
 
 
-def inheritance_hierarchy(cls):
+def inheritance_hierarchy(cls):  # pragma: no cover (for visualization only)
     try:
         from graphviz import Digraph as Dot
     except ImportError:
@@ -118,7 +118,7 @@ def inheritance_hierarchy(cls):
     return d
 
 
-def render_inheritance_hierarchy(cls, path=None):
+def render_inheritance_hierarchy(cls, path=None):  # pragma: no cover (for visualization only)
     d = inheritance_hierarchy(cls)
     if path is None:
         path = mktemp(suffix=classpath(cls) + ".gv")
