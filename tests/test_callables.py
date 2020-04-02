@@ -17,18 +17,18 @@ class Foo:
 
 
 def test_is_staticmethod():
-    assert is_staticmethod(Foo, 'staticmethod')
-    assert not is_staticmethod(Foo, '__init__')
-    assert not is_staticmethod(Foo, 'classmethod')
+    assert is_staticmethod(Foo, "staticmethod")
+    assert not is_staticmethod(Foo, "__init__")
+    assert not is_staticmethod(Foo, "classmethod")
 
 
 def test_is_classmethod():
-    assert is_classmethod(Foo, 'classmethod')
-    assert not is_classmethod(Foo, '__init__')
-    assert not is_classmethod(Foo, 'staticmethod')
+    assert is_classmethod(Foo, "classmethod")
+    assert not is_classmethod(Foo, "__init__")
+    assert not is_classmethod(Foo, "staticmethod")
 
 
 def test_is_method():
-    assert is_method(Foo, '__init__')
-    assert not is_method(Foo, 'classmethod')
-    assert not is_method(Foo, 'staticmethod')
+    assert is_method(Foo, "__init__")
+    assert not is_method(Foo, "classmethod")
+    assert not is_method(Foo, "staticmethod")

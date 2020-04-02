@@ -3,11 +3,16 @@ from typing import *
 from functools import lru_cache
 from inspect import signature
 import pytest
-from bourbaki.introspection.wrappers import lru_cache_sig_preserving, cached_getter, const
+from bourbaki.introspection.wrappers import (
+    lru_cache_sig_preserving,
+    cached_getter,
+    const,
+)
 
 
-def func(a: int, b: List[str], *args: Tuple[str, bytes], foo: Mapping[int, str], bar: Any
-         ) -> Callable[..., List[str]]:
+def func(
+    a: int, b: List[str], *args: Tuple[str, bytes], foo: Mapping[int, str], bar: Any
+) -> Callable[..., List[str]]:
     return a, b
 
 
@@ -20,21 +25,15 @@ class Foo:
     @property
     @cached_getter
     def bar(self):
-        return 'bar'
+        return "bar"
 
 
-@pytest.mark.parametrize("value", [
-    1,
-    2.3,
-    (4, 5),
-    [6, 7, 8],
-    {9: 10},
-])
+@pytest.mark.parametrize("value", [1, 2.3, (4, 5), [6, 7, 8], {9: 10}])
 def test_const(value):
     f = const(value)
     assert f() == value
     assert type(f()) is type(value)
-    assert repr(f) == str(f) == '{}({})'.format(const.__name__, repr(value))
+    assert repr(f) == str(f) == "{}({})".format(const.__name__, repr(value))
 
 
 def test_lru_cache_is_cache():
@@ -51,8 +50,8 @@ def test_lru_cache_same_sig():
 
 def test_cached_getter():
     foo = Foo()
-    assert not hasattr(foo, '_bar')
+    assert not hasattr(foo, "_bar")
     bar = foo.bar
-    assert bar == 'bar'
-    assert hasattr(foo, '_bar')
+    assert bar == "bar"
+    assert hasattr(foo, "_bar")
     assert foo._bar == bar

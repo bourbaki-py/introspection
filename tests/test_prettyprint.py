@@ -2,10 +2,10 @@
 from bourbaki.introspection.prettyprint import fmt_pyobj
 
 obj = {
-    'foo': 'bar',
-    'baz': [1, 2, (3, 4, {5, 6})],
-    'wut': dict(),
-    'wat': frozenset([('wat', 123)])
+    "foo": "bar",
+    "baz": [1, 2, (3, 4, {5, 6})],
+    "wut": dict(),
+    "wat": frozenset([("wat", 123)]),
 }
 
 s = """dict(
@@ -58,10 +58,10 @@ bigfloat = 12345.0
 referred1 = [1, bigfloat, bigint]
 referred2 = ("one", "two")
 obj_with_refs = {
-    'foo': {1: referred1},
-    'bar': [referred1, referred2],
-    'baz': referred2,
-    'wut': frozenset([bigfloat, bigint]),
+    "foo": {1: referred1},
+    "bar": [referred1, referred2],
+    "baz": referred2,
+    "wut": frozenset([bigfloat, bigint]),
 }
 
 s_with_refs_top_level = """foo={
@@ -101,5 +101,5 @@ def test_fmt_pyobj_top_level():
 
 def test_fmt_pyobj_with_refs():
     assert s_with_refs_top_level == fmt_pyobj(
-        obj_with_refs, memo=dict(), top_level=True,
+        obj_with_refs, memo=dict(), top_level=True
     )

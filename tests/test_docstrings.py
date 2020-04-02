@@ -3,7 +3,7 @@ import pytest
 from bourbaki.introspection.docstrings import parse_docstring, CallableDocs, DocStyle
 
 
-def foo(x: int, y: str, z: object=None) -> list:
+def foo(x: int, y: str, z: object = None) -> list:
     # sphinx style docstring
     """
     This is the short desc,
@@ -81,7 +81,9 @@ docs_auto_sphinx = parse_docstring(foo, DocStyle.auto)
 
 docs_auto_google = parse_docstring(bar, DocStyle.auto)
 
-all_docs = pytest.mark.parametrize("docs", [docs_sphinx, docs_google, docs_auto_sphinx, docs_auto_google])
+all_docs = pytest.mark.parametrize(
+    "docs", [docs_sphinx, docs_google, docs_auto_sphinx, docs_auto_google]
+)
 
 
 @all_docs
@@ -138,7 +140,10 @@ def test_parse_docstring_param_type(docs: CallableDocs, name: str, type_: str):
 
 
 @all_docs
-@pytest.mark.parametrize("name,doc", [("x", "an integer"), ("y", "a str\n  and more y stuff"), ("z", "an object")])
+@pytest.mark.parametrize(
+    "name,doc",
+    [("x", "an integer"), ("y", "a str\n  and more y stuff"), ("z", "an object")],
+)
 def test_parse_docstring_param_doc(docs: CallableDocs, name: str, doc: str):
     param = docs.params[name]
     assert param.doc == doc

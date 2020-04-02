@@ -9,11 +9,26 @@ from numbers import Number, Integral, Real
 import sys
 from itertools import repeat, chain, product, combinations
 from bourbaki.introspection.types import deconstruct_generic, reconstruct_generic
-from bourbaki.introspection.types import (issubclass_generic, get_generic_params, deconstruct_generic,
-                                          reconstruct_generic, get_constructor_for, eval_forward_refs,
-                                          constraint_type, LazyType, Builtin, BuiltinAtomic, NonStdLib,
-                                          NonStrCollection, NonAnyStrCollection, NonStrSequence, NonAnyStrSequence,
-                                          NonCollection, NamedTupleABC, PseudoGenericMeta)
+from bourbaki.introspection.types import (
+    issubclass_generic,
+    get_generic_params,
+    deconstruct_generic,
+    reconstruct_generic,
+    get_constructor_for,
+    eval_forward_refs,
+    constraint_type,
+    LazyType,
+    Builtin,
+    BuiltinAtomic,
+    NonStdLib,
+    NonStrCollection,
+    NonAnyStrCollection,
+    NonStrSequence,
+    NonAnyStrSequence,
+    NonCollection,
+    NamedTupleABC,
+    PseudoGenericMeta,
+)
 
 
 class KindaGenericMeta(PseudoGenericMeta):
@@ -22,7 +37,9 @@ class KindaGenericMeta(PseudoGenericMeta):
         if not isinstance(args, tuple):
             args = (args,)
         mcs = type(cls)
-        return type.__new__(mcs, cls.__name__, (cls,), dict(__args__=args, __origin__=cls))
+        return type.__new__(
+            mcs, cls.__name__, (cls,), dict(__args__=args, __origin__=cls)
+        )
 
 
 class KindaGeneric(metaclass=KindaGenericMeta):
@@ -32,28 +49,42 @@ class KindaGeneric(metaclass=KindaGenericMeta):
 T_co = TypeVar("T", covariant=True)
 K = TypeVar("K")
 
-class Foo(Mapping[K, T_co]): ...
 
-class Bar(Foo[int, T_co]): ...
+class Foo(Mapping[K, T_co]):
+    ...
 
-class MyStr(str): ...
 
-class MySpecialStr(MyStr): ...
+class Bar(Foo[int, T_co]):
+    ...
+
+
+class MyStr(str):
+    ...
+
+
+class MySpecialStr(MyStr):
+    ...
+
 
 class Baz(Bar[MySpecialStr]):
     """I should be a subclass of Mapping[int, str] and Mapping[int, MyStr] and
     Container[int]"""
 
-class Boom(Baz): ...
+
+class Boom(Baz):
+    ...
+
 
 class FooTuple(NamedTuple):
     foo: int
     bar: bool
     baz: MyStr
 
+
 class FooCallable(Generic[K]):
-    def __call__(self, x: Collection[K], y: str = 'y') -> K:
+    def __call__(self, x: Collection[K], y: str = "y") -> K:
         pass
+
 
 Hashable.register(Number)
 
@@ -81,18 +112,34 @@ generic_chains = [
 
 key_types = list(set(chain.from_iterable(atomic_chains)))
 
-mapping_chains = [
-    (Dict, Collection),
-]
+mapping_chains = [(Dict, Collection)]
 
 tuple_chains = [
-    (FooTuple, Tuple[Union[int, complex], int, str], Tuple[Number, Union[int, Number], Hashable], Tuple[Union[Number, Hashable], Any, Hashable]),
-    (Tuple[Counter[str], Mapping[str, int]], Tuple[Mapping[str, Number], Mapping[str, Any]], Tuple[Collection[Hashable], ...]),
+    (
+        FooTuple,
+        Tuple[Union[int, complex], int, str],
+        Tuple[Number, Union[int, Number], Hashable],
+        Tuple[Union[Number, Hashable], Any, Hashable],
+    ),
+    (
+        Tuple[Counter[str], Mapping[str, int]],
+        Tuple[Mapping[str, Number], Mapping[str, Any]],
+        Tuple[Collection[Hashable], ...],
+    ),
 ]
 
 callable_chains = [
-    (Callable[[Any, Any], Union[Number, str]], Callable[[Number, Number], Hashable], Callable[[int, float], Any], Callable),
-    (Callable[[Mapping[str, Hashable]], Number], Callable[[Mapping[str, Number]], Hashable], Callable[[Counter[str]], Any]),
+    (
+        Callable[[Any, Any], Union[Number, str]],
+        Callable[[Number, Number], Hashable],
+        Callable[[int, float], Any],
+        Callable,
+    ),
+    (
+        Callable[[Mapping[str, Hashable]], Number],
+        Callable[[Mapping[str, Number]], Hashable],
+        Callable[[Counter[str]], Any],
+    ),
     (Callable[[Any, Number], bool], Callable[..., int], Callable[..., Number]),
     (FooCallable, Callable),
     (FooCallable[int], Callable[[Collection[int], str], int]),
@@ -121,9 +168,14 @@ class Dummy:
 
 type_refs = [
     (Tuple["Number", "T_co", "Dummy"], Tuple[Number, T_co, Dummy]),
-    (Mapping[Tuple["Any", "Dummy"], Set["T_co"]], Mapping[Tuple[Any, Dummy], Set[T_co]]),
-    (Callable[[Tuple["T_co", ...]], Set[Tuple["Dummy", Iterable["Any"]]]],
-     Callable[[Tuple[T_co, ...]], Set[Tuple[Dummy, Iterable[Any]]]]),
+    (
+        Mapping[Tuple["Any", "Dummy"], Set["T_co"]],
+        Mapping[Tuple[Any, Dummy], Set[T_co]],
+    ),
+    (
+        Callable[[Tuple["T_co", ...]], Set[Tuple["Dummy", Iterable["Any"]]]],
+        Callable[[Tuple[T_co, ...]], Set[Tuple[Dummy, Iterable[Any]]]],
+    ),
     (LazyType["collections.abc.Iterable"], LazyType["collections.abc.Iterable"]),
 ]
 
@@ -135,7 +187,10 @@ class mystr(str):
 abstract_classes_pos = [
     (Builtin, [int, str, list, tuple, bytes, set, frozenset, complex]),
     (NonStdLib, [Foo, mystr]),
-    (NonStrCollection, [list, tuple, set, frozenset, bytes, Tuple, List, Mapping, Set, ByteString]),
+    (
+        NonStrCollection,
+        [list, tuple, set, frozenset, bytes, Tuple, List, Mapping, Set, ByteString],
+    ),
     (NonAnyStrCollection, [list, tuple, set, frozenset, Tuple, List, Mapping, Set]),
     (NonStrSequence, [list, tuple, bytes, Tuple, List, ByteString]),
     (NonAnyStrSequence, [list, tuple, Tuple, List]),
@@ -167,7 +222,7 @@ def ordered_pairs(seq):
 
 
 def parameterize(org, *args):
-    return org[args[:len(get_generic_params(org))]]
+    return org[args[: len(get_generic_params(org))]]
 
 
 def _test_cases(generic_chain, atomic_chain, *extras, reverse=False):
@@ -175,10 +230,12 @@ def _test_cases(generic_chain, atomic_chain, *extras, reverse=False):
         generic_chain = reversed(generic_chain)
         atomic_chain = reversed(atomic_chain)
     # g1 <: g1 & t1 <: t2 => g1[t1] <: g2[t2]
-    return ((parameterize(g1, *extras, t1), parameterize(g2, *extras, t2))
-            for (g1, g2), (t1, t2) in product(ordered_pairs(generic_chain),
-                                              ordered_pairs(atomic_chain))
-            )
+    return (
+        (parameterize(g1, *extras, t1), parameterize(g2, *extras, t2))
+        for (g1, g2), (t1, t2) in product(
+            ordered_pairs(generic_chain), ordered_pairs(atomic_chain)
+        )
+    )
 
 
 def _mapping_test_cases(mapping_chain, atomic_chain, key_types, reverse=False):
@@ -187,13 +244,24 @@ def _mapping_test_cases(mapping_chain, atomic_chain, key_types, reverse=False):
 
 
 def all_test_cases(reverse=False):
-    return list(set(chain(
-        chain.from_iterable(_mapping_test_cases(gc, ac, key_types, reverse=reverse)
-                            for gc, ac in product(mapping_chains, atomic_chains)),
-        chain.from_iterable(_test_cases(gc, ac, reverse=reverse)
-                            for gc, ac in product(generic_chains, atomic_chains)),
-        chain.from_iterable(ordered_pairs(reversed(tups) if reverse else tups) for tups in tuple_chains + callable_chains),
-    )))
+    return list(
+        set(
+            chain(
+                chain.from_iterable(
+                    _mapping_test_cases(gc, ac, key_types, reverse=reverse)
+                    for gc, ac in product(mapping_chains, atomic_chains)
+                ),
+                chain.from_iterable(
+                    _test_cases(gc, ac, reverse=reverse)
+                    for gc, ac in product(generic_chains, atomic_chains)
+                ),
+                chain.from_iterable(
+                    ordered_pairs(reversed(tups) if reverse else tups)
+                    for tups in tuple_chains + callable_chains
+                ),
+            )
+        )
+    )
 
 
 @pytest.mark.parametrize("t1,t2", all_test_cases())
@@ -206,20 +274,31 @@ def test_issubclass_generic_neg(t1, t2):
     assert not issubclass_generic(t1, t2)
 
 
-@pytest.mark.parametrize("type_", list(set(chain.from_iterable(chain(atomic_chains,
-                                                                     generic_chains,
-                                                                     mapping_chains,
-                                                                     callable_chains)))))
+@pytest.mark.parametrize(
+    "type_",
+    list(
+        set(
+            chain.from_iterable(
+                chain(atomic_chains, generic_chains, mapping_chains, callable_chains)
+            )
+        )
+    ),
+)
 def test_deconstruct_reconstruct_type(type_):
     assert reconstruct_generic(deconstruct_generic(type_)) == type_
 
 
-@pytest.mark.parametrize("generic,type_", product(
-    [Tuple, Collection, Counter, Iterable, Callable[[K], K]],
-    set(chain.from_iterable(chain(atomic_chains,
-                                  generic_chains,
-                                  mapping_chains,
-                                  callable_chains)))))
+@pytest.mark.parametrize(
+    "generic,type_",
+    product(
+        [Tuple, Collection, Counter, Iterable, Callable[[K], K]],
+        set(
+            chain.from_iterable(
+                chain(atomic_chains, generic_chains, mapping_chains, callable_chains)
+            )
+        ),
+    ),
+)
 def test_deconstruct_reconstruct_type(generic, type_):
     t = generic[type_]
     assert reconstruct_generic(deconstruct_generic(t)) == t
@@ -251,16 +330,25 @@ def test_abstract_types_neg(base, type_):
     assert not issubclass(type_, base)
 
 
-@pytest.mark.parametrize("base,type_", product([Mapping[int, str], Mapping[int, MyStr], Collection[int]],
-                                               [Baz, Boom]))
+@pytest.mark.parametrize(
+    "base,type_",
+    product([Mapping[int, str], Mapping[int, MyStr], Collection[int]], [Baz, Boom]),
+)
 def test_transitive_generic(base, type_):
     assert issubclass_generic(type_, base)
 
 
-@pytest.mark.parametrize("type1,type2,pos", [(Pattern[str], Pattern, True), (Pattern[bytes], Pattern, True),
-                                             (Pattern, Pattern[str], False), (Pattern, Pattern[bytes], False),
-                                             (Pattern[str], Pattern[bytes], False),
-                                             (Pattern[bytes], Pattern[str], False)])
+@pytest.mark.parametrize(
+    "type1,type2,pos",
+    [
+        (Pattern[str], Pattern, True),
+        (Pattern[bytes], Pattern, True),
+        (Pattern, Pattern[str], False),
+        (Pattern, Pattern[bytes], False),
+        (Pattern[str], Pattern[bytes], False),
+        (Pattern[bytes], Pattern[str], False),
+    ],
+)
 def test_py36_fake_types(type1, type2, pos):
     if pos:
         assert issubclass_generic(type1, type2)
@@ -268,73 +356,73 @@ def test_py36_fake_types(type1, type2, pos):
         assert not issubclass_generic(type1, type2)
 
 
-@pytest.mark.parametrize('abc,cls', [
-    (NonStrCollection, list),
-    (NonStrCollection, set),
-    (NonStrCollection, bytes),
-    (NonStrCollection, NonStrCollection),
-    (NonAnyStrCollection, tuple),
-    (NonAnyStrCollection, frozenset),
-    (NonAnyStrCollection, Foo),
-    (NonAnyStrCollection, NonAnyStrCollection),
-    (NonStrSequence, tuple),
-    (NonStrSequence, bytes),
-    (NonAnyStrSequence, tuple),
-    (NonStrSequence, NonAnyStrSequence),
-    (NonStrCollection, NonAnyStrCollection),
-    (Builtin, bool),
-    (Builtin, frozenset),
-    (BuiltinAtomic, str),
-    (BuiltinAtomic, int),
-    (BuiltinAtomic, bool),
-    (NonStdLib, Foo),
-    (NonStdLib, MyStr),
-    (NonCollection, str),
-    (NonCollection, MyStr),
-    (NamedTupleABC, FooTuple),
-])
+@pytest.mark.parametrize(
+    "abc,cls",
+    [
+        (NonStrCollection, list),
+        (NonStrCollection, set),
+        (NonStrCollection, bytes),
+        (NonStrCollection, NonStrCollection),
+        (NonAnyStrCollection, tuple),
+        (NonAnyStrCollection, frozenset),
+        (NonAnyStrCollection, Foo),
+        (NonAnyStrCollection, NonAnyStrCollection),
+        (NonStrSequence, tuple),
+        (NonStrSequence, bytes),
+        (NonAnyStrSequence, tuple),
+        (NonStrSequence, NonAnyStrSequence),
+        (NonStrCollection, NonAnyStrCollection),
+        (Builtin, bool),
+        (Builtin, frozenset),
+        (BuiltinAtomic, str),
+        (BuiltinAtomic, int),
+        (BuiltinAtomic, bool),
+        (NonStdLib, Foo),
+        (NonStdLib, MyStr),
+        (NonCollection, str),
+        (NonCollection, MyStr),
+        (NamedTupleABC, FooTuple),
+    ],
+)
 def test_abc_has_subclass(abc, cls):
     assert issubclass(cls, abc)
 
 
-@pytest.mark.parametrize('abc,cls', [
-    (NonStrCollection, str),
-    (NonAnyStrCollection, str),
-    (NonAnyStrCollection, bytes),
-    (NonStrSequence, str),
-    (NonAnyStrSequence, str),
-    (NonAnyStrSequence, bytes),
-    (Builtin, Foo),
-    (Builtin, MyStr),
-    (BuiltinAtomic, list),
-    (BuiltinAtomic, set),
-    (BuiltinAtomic, Foo),
-    (BuiltinAtomic, MyStr),
-    (NonStdLib, int),
-    (NonStdLib, list),
-    (NonCollection, frozenset),
-    (NonCollection, tuple),
-    (NamedTupleABC, tuple),
-    (NonAnyStrCollection, NonStrCollection),
-    (NonAnyStrSequence, NonStrSequence),
-    (NonStrCollection, Collection),
-    (NonAnyStrCollection, Collection),
-    (NonStrSequence, Sequence),
-    (NonStrSequence, Collection),
-    (NonAnyStrSequence, Sequence),
-    (NonAnyStrSequence, Collection),
-])
+@pytest.mark.parametrize(
+    "abc,cls",
+    [
+        (NonStrCollection, str),
+        (NonAnyStrCollection, str),
+        (NonAnyStrCollection, bytes),
+        (NonStrSequence, str),
+        (NonAnyStrSequence, str),
+        (NonAnyStrSequence, bytes),
+        (Builtin, Foo),
+        (Builtin, MyStr),
+        (BuiltinAtomic, list),
+        (BuiltinAtomic, set),
+        (BuiltinAtomic, Foo),
+        (BuiltinAtomic, MyStr),
+        (NonStdLib, int),
+        (NonStdLib, list),
+        (NonCollection, frozenset),
+        (NonCollection, tuple),
+        (NamedTupleABC, tuple),
+        (NonAnyStrCollection, NonStrCollection),
+        (NonAnyStrSequence, NonStrSequence),
+        (NonStrCollection, Collection),
+        (NonAnyStrCollection, Collection),
+        (NonStrSequence, Sequence),
+        (NonStrSequence, Collection),
+        (NonAnyStrSequence, Sequence),
+        (NonAnyStrSequence, Collection),
+    ],
+)
 def test_abc_does_not_have_subclass(abc, cls):
     assert not issubclass(cls, abc)
 
 
-@pytest.mark.parametrize("args", [
-    (1, 2, 3),
-    "foobar",
-    True,
-    int,
-    (List, Tuple),
-])
+@pytest.mark.parametrize("args", [(1, 2, 3), "foobar", True, int, (List, Tuple)])
 def test_custom_metaclass_deconstructible(args):
     t = KindaGeneric[args]
     decons = deconstruct_generic(t)
