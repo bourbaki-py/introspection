@@ -255,7 +255,8 @@ def _issubclass_generic_callable(org1, generic_args1, org2, args2):
     if sig_args2 is not Ellipsis:
         sig_params1 = [
             # take one more than the number of args in input_args2 in case there is an extra required arg
-            p for name, p in islice(sig.parameters.items(), len(sig_args2) + 1)
+            p
+            for name, p in islice(sig.parameters.items(), len(sig_args2) + 1)
             if p.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
         ]
 
@@ -265,23 +266,23 @@ def _issubclass_generic_callable(org1, generic_args1, org2, args2):
             if sig_params1[len(sig_args2)].default is Parameter.empty:
                 # extra required arg; not compatible
                 return False
-            sig_params1 = sig_params1[:len(sig_args2)]
+            sig_params1 = sig_params1[: len(sig_args2)]
         # now input_params1 has the same length as input_args2
         # bind generic params into signature types
         tparams = get_generic_params(org1)
         tparam_dict = dict(zip(tparams, generic_args1))
         args1 = (
-            [reparameterize_generic(arg.annotation, tparam_dict) for arg in sig_params1],
+            [
+                reparameterize_generic(arg.annotation, tparam_dict)
+                for arg in sig_params1
+            ],
             reparameterize_generic(sig.return_annotation, tparam_dict),
         )
     else:
         # only return types matter
         tparams = get_generic_params(org1)
         tparam_dict = dict(zip(tparams, generic_args1))
-        args1 = (
-            Ellipsis,
-            reparameterize_generic(sig.return_annotation, tparam_dict),
-        )
+        args1 = (Ellipsis, reparameterize_generic(sig.return_annotation, tparam_dict))
     return _issubclass_callable_callable(args1, args2)
 
 
@@ -306,10 +307,13 @@ def _issubclass_callable_callable(args1, args2):
     )
 
 
-def comparable_signature_args(sig: Signature, sig_args2: Tuple[List[typing.Type], typing.Type]):
+def comparable_signature_args(
+    sig: Signature, sig_args2: Tuple[List[typing.Type], typing.Type]
+):
     sig_params1 = [
         # take one more than the number of args in input_args2 in case there is an extra required arg
-        p for name, p in islice(sig.parameters.items(), len(sig_args2) + 1)
+        p
+        for name, p in islice(sig.parameters.items(), len(sig_args2) + 1)
         if p.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
     ]
 
@@ -319,7 +323,7 @@ def comparable_signature_args(sig: Signature, sig_args2: Tuple[List[typing.Type]
         if sig_params1[len(sig_args2)].default is Parameter.empty:
             # extra required arg; not compatible
             return False
-        sig_params1 = sig_params1[:len(sig_args2)]
+        sig_params1 = sig_params1[: len(sig_args2)]
     # now input_params1 has the same length as input_args2
     # bind generic params into signature types
     tparams = get_generic_params(org1)

@@ -28,7 +28,7 @@ O = TypeVar("O")
 builtin_callable_types = {
     int: [
         Callable[[Union[Number, str]], int],
-        Callable[[Union[str, bytes, bytearray], int], int]
+        Callable[[Union[str, bytes, bytearray], int], int],
     ],
     float: Callable[[Union[Number, str]], float],
     complex: [Callable[[str], complex], Callable[[Number, Number], complex]],
@@ -40,11 +40,11 @@ builtin_callable_types = {
     bin: Callable[[int], str],
     bytes: [
         Callable[[Union[Iterable[int], int, bytes, bytearray, memoryview]], bytes],
-        Callable[[str, str], bytes]
+        Callable[[str, str], bytes],
     ],
     bytearray: [
         Callable[[Union[Iterable[int], int, bytes, bytearray, memoryview]], bytearray],
-        Callable[[str, str], bytearray]
+        Callable[[str, str], bytearray],
     ],
     callable: Callable[[Any], bool],
     chr: Callable[[int], str],
@@ -54,7 +54,7 @@ builtin_callable_types = {
     # leaving out divmod - generic in the return type
     enumerate: [
         Callable[[Iterable[T]], Iterable[Tuple[int, T]]],
-        Callable[[Iterable[T], int], Iterable[Tuple[int, T]]]
+        Callable[[Iterable[T], int], Iterable[Tuple[int, T]]],
     ],
     eval: Callable[[str], Any],
     # leaving out exec - only for side effects

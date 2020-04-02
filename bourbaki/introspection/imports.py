@@ -162,7 +162,9 @@ if sys.version_info >= (3, 8):
             return ("...",)
         else:
             raise SyntaxError(
-                "{} is not a valid subexpression of a parameterized type expression".format(node.value),
+                "{} is not a valid subexpression of a parameterized type expression".format(
+                    node.value
+                )
             )
 
 

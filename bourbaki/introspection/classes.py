@@ -110,15 +110,15 @@ def inheritance_hierarchy(cls):  # pragma: no cover (for visualization only)
     try:
         from graphviz import Digraph as Dot
     except ImportError:
-        raise ImportError(
-            "visualization of inheritance hierarchies requires graphviz"
-        )
+        raise ImportError("visualization of inheritance hierarchies requires graphviz")
     d = Dot("Inheritance hierarchy for {}".format(classpath(cls)))
     d.edges((classpath(c1), classpath(c2)) for c1, c2 in inheritances(cls))
     return d
 
 
-def render_inheritance_hierarchy(cls, path=None):  # pragma: no cover (for visualization only)
+def render_inheritance_hierarchy(
+    cls, path=None
+):  # pragma: no cover (for visualization only)
     d = inheritance_hierarchy(cls)
     if path is None:
         path = mktemp(suffix=classpath(cls) + ".gv")

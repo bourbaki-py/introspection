@@ -1,5 +1,16 @@
 # coding:utf-8
-from typing import List, Tuple, Dict, Collection, Callable, Type, Union, Optional, Generic, Any
+from typing import (
+    List,
+    Tuple,
+    Dict,
+    Collection,
+    Callable,
+    Type,
+    Union,
+    Optional,
+    Generic,
+    Any,
+)
 import re
 from tempfile import mktemp
 from itertools import chain, combinations
@@ -101,6 +112,7 @@ class GenericTypeLevelDispatch:
     Thus a function `f` registered for the signature (numbers.Number, Iterable[int]) would recieve the args
     (int, List[bool]) directly if the dispatcher were called on those types and determined that `f` was the most
     specific resolution for that signature via the subtype relation."""
+
     def __init__(self, name, isolated_bases: Optional[List[Type]] = None):
         self.name = self.__name__ = name
         self._cache = {}
@@ -339,6 +351,7 @@ class GenericTypeLevelSingleDispatch(GenericTypeLevelDispatch):
     a function registered for Mapping[numbers.Number, int] would recieve arguments (Dict, float, bool) if dispatched on
     the type Dict[float, bool]. This saves the implementer some introspection of the types at the call site.
     """
+
     def __call__(self, type_, **kwargs):
         sig = (type_,)
         f = self.resolve(sig)

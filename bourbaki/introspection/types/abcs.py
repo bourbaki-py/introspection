@@ -1,10 +1,7 @@
 # coding:utf-8
 import typing
 import enum
-from .inspection import (
-    is_top_type,
-    is_named_tuple_class,
-)
+from .inspection import is_top_type, is_named_tuple_class
 
 STDLIB_MODULES = {
     "builtins",

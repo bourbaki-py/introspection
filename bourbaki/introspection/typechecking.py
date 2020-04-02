@@ -128,7 +128,9 @@ class CallableTypeChecker:
                         "Can't check that {} is {}; call to inspect.signature() failed - most likely an extension or builtin; "
                         "returning True".format(
                             func,
-                            "{}[{}, {}]".format(name_of(self.callable_), signature_, return_),
+                            "{}[{}, {}]".format(
+                                name_of(self.callable_), signature_, return_
+                            ),
                         )
                     )
                     return True
@@ -173,7 +175,10 @@ class CallableTypeChecker:
         test_type = (self.callable_, *signature_, return_)
         if isinstance(runtime_type, list):
             # builtin signatures - can't use Union
-            return any(issubclass_generic(concretize_typevars(t), test_type) for t in runtime_type)
+            return any(
+                issubclass_generic(concretize_typevars(t), test_type)
+                for t in runtime_type
+            )
         else:
             return issubclass_generic(concretize_typevars(runtime_type), test_type)
 

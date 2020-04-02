@@ -106,6 +106,7 @@ def update_repr_args(self):
         if replace_defaults:
             filter_ = None
         else:
+
             def filter_(param):
                 # where the default value wasn't passed, check the attribute
                 return arguments[param.name] != param.default
@@ -180,9 +181,7 @@ def set_simple_repr_class_attrs(
         )
 
     if isinstance(inspect_attrs, (tuple, frozenset)):
-        if not all(
-            isinstance(a, str) and str.isidentifier(a) for a in inspect_attrs
-        ):
+        if not all(isinstance(a, str) and str.isidentifier(a) for a in inspect_attrs):
             raise ValueError(
                 "when a collection of attribute names is passed as inspect_attrs, "
                 "all names should be strings and legal identifiers"
@@ -207,7 +206,11 @@ def set_simple_repr_class_attrs(
     setattr(cls, INIT_VARKWARGS_NAME_ATTR, varkwargs_name(sig))
     setattr(cls, INIT_VARARGS_NAME_ATTR, varargs_name(sig))
 
-    name = "{}.{}".format(cls.__module__, cls.__qualname__) if use_qualname else cls.__name__
+    name = (
+        "{}.{}".format(cls.__module__, cls.__qualname__)
+        if use_qualname
+        else cls.__name__
+    )
     setattr(cls, REPR_NAME_ATTR, name)
 
     if override_init:
