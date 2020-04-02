@@ -8,64 +8,52 @@ from bourbaki.introspection.typechecking import type_checker
 from typing import List, Tuple, Set, Sequence
 
 
-@pytest.fixture(scope="module")
-def ClassWithSimpleRepr():
-    @with_simple_repr(use_qualname=False, inspect_attrs=('things', 'x', 'y', 'foo'))
-    class Foo:
-        def __init__(self, *things, x, y=1, z=2, **extras):
-            self.things = tuple(map(str, things))
-            self.x = bool(x)
-            self.y = -abs(y)
-            self.z = float(z)
+@with_simple_repr(use_qualname=False, inspect_attrs=('things', 'x', 'y', 'foo'))
+class ClassWithSimpleRepr:
+    def __init__(self, *things, x, y=1, z=2, **extras):
+        self.things = tuple(map(str, things))
+        self.x = bool(x)
+        self.y = str(y)
+        self.z = float(z)
 
-            if 'foo' in extras:
-                self.foo = extras['foo'].strip()
-            else:
-                self.foo = None
-
-    return Foo
+        if 'foo' in extras:
+            self.foo = extras['foo'].strip()
+        else:
+            self.foo = None
 
 
-@pytest.fixture(scope="module")
-def Foo():
-    class Foo:
-        def __init__(self, a, *, b: int=4):
-            """I take a and an int b"""
-            self.a = a
-            self.b = b
-            """i take a and an int b"""
+class Foo:
+    def __init__(self, a, *, b: int=4):
+        """I take a and an int b"""
+        self.a = a
+        self.b = b
+        """i take a and an int b"""
 
-        def add(self):
-            return self.a + self.b
+    def add(self):
+        return self.a + self.b
 
-        def list(self):
-            return self.a, self.b
-
-    return Foo
+    def list(self):
+        return self.a, self.b
 
 
-@pytest.fixture(scope="module")
-def Bar(Foo):
-    class Bar:
-        @subclass_mutator_method(Foo)
-        def __init__(self, d=0, a=2, *args, c: str="foo", **kw):
-            """i also take a str c and anything d"""
-            self.d = d
-            self.c = c
+class Bar:
+    @subclass_mutator_method(Foo)
+    def __init__(self, d=0, a=2, *args, c: str="foo", **kw):
+        """i also take a str c and anything d"""
+        self.d = d
+        self.c = c
 
-        @subclass_method(Foo, pass_to_wrapper_as="x")
-        def add(self, x=0):
-            return self.c + self.d + x
+    @subclass_method(Foo, pass_to_wrapper_as="x")
+    def add(self, x=0):
+        return self.c + self.d + x
 
-        @subclass_method(Foo.list, pass_to_wrapper_as=("a", "b"))
-        def add_again(self, a=None, b=None):
-            return a + b + self.c + self.d
-
-    return Bar
+    @subclass_method(Foo.list, pass_to_wrapper_as=("a", "b"))
+    def add_again(self, a=None, b=None):
+        return a + b + self.c + self.d
 
 
 @pytest.fixture
-def bar(Bar):
+def bar():
     return Bar(4, 1, b=2, c=3)
 
 
@@ -74,7 +62,7 @@ def test_SubclassMutator_init(bar):
         assert getattr(bar, attr) == n
 
 
-def test_SubclassMutator_init_sig(Bar):
+def test_SubclassMutator_init_sig():
     assert list(signature(Bar).parameters) == ['d', 'a', 'c', 'b']
     assert list(signature(Bar.__init__).parameters) == ['self', 'd', 'a', 'c', 'b']
 
@@ -87,20 +75,20 @@ def test_SubclassMethod_multi_arg(bar):
     assert bar.add_again() == 10
 
 
-def test_simple_repr(ClassWithSimpleRepr):
+def test_simple_repr():
     name = ClassWithSimpleRepr.__name__
-    x, y, z = 1, 1, 3
-    foo = ClassWithSimpleRepr(1, 2, (3, 4), x=x, z=z, **dict(foo="  bar  ", bar="  baz  "))
-
-    assert foo.x == bool(x)
-    assert foo.y == -abs(y) and isinstance(foo.y, type(y))
-    assert foo.z == float(z) and isinstance(foo.z, float)
-    assert foo.foo == "bar"
-    # things, x, y, and foo are inspected, but y is the default
-    # so repr should show things, x, and foo as they exist as attributes, y as default (1 vs -1)
-    print(repr(foo))
-    assert repr(foo) == ("{}('1', '2', '(3, 4)', x=True, y=1, z=3, bar='  baz  ', foo='bar')"
-                         .format(name))
+    x, z = 1, 3
+    things = 1, 2, (3, 4)
+    foo = ClassWithSimpleRepr(*things, x=x, z=z, foo="  bar  ", bar="  baz  ")
+    # things, x, y are inspected, but y is shown as the default and z is changed from what is passed but
+    # this doesn't show up in the repr because we don't inspect it.
+    # foo isn't a constructor arg so it isn't inspected.
+    # so repr should show things, x, and foo as they exist as attributes, y as default (1 vs '1'), z as passed,
+    # and foo as passed.
+    assert repr(foo) == (
+        "{}('1', '2', '(3, 4)', x=True, y=1, z=3, bar='  baz  ', foo='  bar  ')"
+        .format(name)
+    )
 
 
 # Scala object model tests

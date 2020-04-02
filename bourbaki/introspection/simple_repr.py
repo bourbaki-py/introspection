@@ -98,7 +98,7 @@ def update_repr_args(self):
     sig = getattr(self, INIT_SIG_ATTR)
     arguments = getattr(self, INIT_ARGS_ATTR)
     check_attrs = getattr(self, INSPECT_ATTRS_ATTR)
-
+    print("CHECK", check_attrs)
     if check_attrs:
         cls = type(self)
         replace_defaults = getattr(cls, REPLACE_DEFAULTS_ATTR)
@@ -106,7 +106,6 @@ def update_repr_args(self):
         if replace_defaults:
             filter_ = None
         else:
-
             def filter_(param):
                 # where the default value wasn't passed, check the attribute
                 return arguments[param.name] != param.default
@@ -180,16 +179,11 @@ def set_simple_repr_class_attrs(
             )
         )
 
-    if not isinstance(inspect_attrs, (bool, tuple, frozenset)):  # pragma: no cover
-        raise TypeError(
-            "inspect_attrs should be a bool or an immutable collection of (tuple, frozenset) "
-            "attribute names to be inspected"
-        )
-    elif isinstance(inspect_attrs, (tuple, frozenset)):
+    if isinstance(inspect_attrs, (tuple, frozenset)):
         if not all(
             isinstance(a, str) and str.isidentifier(a) for a in inspect_attrs
-        ):  # pragma: no cover
-            raise TypeError(
+        ):
+            raise ValueError(
                 "when a collection of attribute names is passed as inspect_attrs, "
                 "all names should be strings and legal identifiers"
             )
@@ -197,9 +191,15 @@ def set_simple_repr_class_attrs(
         if any(a not in sig.parameters for a in inspect_attrs):  # pragma: no cover
             warn(
                 "attribute names {} are not present in the init signature and will be ignored".format(
-                    tuple(set(inspect_attrs).difference(sig.parameters))
+                    set(inspect_attrs).difference(sig.parameters)
                 )
             )
+            inspect_attrs = frozenset(sig.parameters).intersection(inspect_attrs)
+    elif not isinstance(inspect_attrs, bool):  # pragma: no cover
+        raise TypeError(
+            "inspect_attrs should be a bool or an immutable collection (tuple, frozenset) of"
+            "attribute names to be inspected"
+        )
 
     setattr(cls, INIT_SIG_ATTR, sig)
     setattr(cls, INSPECT_ATTRS_ATTR, inspect_attrs)
@@ -207,13 +207,7 @@ def set_simple_repr_class_attrs(
     setattr(cls, INIT_VARKWARGS_NAME_ATTR, varkwargs_name(sig))
     setattr(cls, INIT_VARARGS_NAME_ATTR, varargs_name(sig))
 
-    if use_qualname is True:
-        name = "{}.{}".format(cls.__module__, cls.__qualname__)
-    elif use_qualname is False:
-        name = cls.__name__
-    else:
-        name = use_qualname
-
+    name = "{}.{}".format(cls.__module__, cls.__qualname__) if use_qualname else cls.__name__
     setattr(cls, REPR_NAME_ATTR, name)
 
     if override_init:
