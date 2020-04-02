@@ -1,9 +1,9 @@
 # coding: utf-8
-from typing import Generic, Tuple, TypeVar, Union
+from typing import List, Generic, Tuple, TypeVar, Union
 import typing
 import sys
 from functools import lru_cache
-from inspect import getmro, signature, Parameter
+from inspect import getmro, signature, Signature, Parameter
 from itertools import repeat, islice
 import types
 from .inspection import (
@@ -244,7 +244,7 @@ def _issubclass_with_variance(t1, t2, param: TypeVar):
     return t1 == t2
 
 
-def _issubclass_generic_callable(org1, sig_args1, org2, args2):
+def _issubclass_generic_callable(org1, generic_args1, org2, args2):
     # org1 must be a callable class
     if not issubclass_generic(org1, org2):
         return False
@@ -269,7 +269,7 @@ def _issubclass_generic_callable(org1, sig_args1, org2, args2):
         # now input_params1 has the same length as input_args2
         # bind generic params into signature types
         tparams = get_generic_params(org1)
-        tparam_dict = dict(zip(tparams, sig_args1))
+        tparam_dict = dict(zip(tparams, generic_args1))
         args1 = (
             [reparameterize_generic(arg.annotation, tparam_dict) for arg in sig_params1],
             reparameterize_generic(sig.return_annotation, tparam_dict),
@@ -277,7 +277,7 @@ def _issubclass_generic_callable(org1, sig_args1, org2, args2):
     else:
         # only return types matter
         tparams = get_generic_params(org1)
-        tparam_dict = dict(zip(tparams, sig_args1))
+        tparam_dict = dict(zip(tparams, generic_args1))
         args1 = (
             Ellipsis,
             reparameterize_generic(sig.return_annotation, tparam_dict),
@@ -303,4 +303,28 @@ def _issubclass_callable_callable(args1, args2):
     # contravariant in arguments
     return issubclass_generic(ret1, ret2) and all(
         issubclass_generic(t2, t1) for (t2, t1) in zip(sig2, sig1)
+    )
+
+
+def comparable_signature_args(sig: Signature, sig_args2: Tuple[List[typing.Type], typing.Type]):
+    sig_params1 = [
+        # take one more than the number of args in input_args2 in case there is an extra required arg
+        p for name, p in islice(sig.parameters.items(), len(sig_args2) + 1)
+        if p.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
+    ]
+
+    if len(sig_params1) < len(sig_args2):
+        return False
+    elif len(sig_params1) > len(sig_args2):
+        if sig_params1[len(sig_args2)].default is Parameter.empty:
+            # extra required arg; not compatible
+            return False
+        sig_params1 = sig_params1[:len(sig_args2)]
+    # now input_params1 has the same length as input_args2
+    # bind generic params into signature types
+    tparams = get_generic_params(org1)
+    tparam_dict = dict(zip(tparams, sig_args1))
+    args1 = (
+        [reparameterize_generic(arg.annotation, tparam_dict) for arg in sig_params1],
+        reparameterize_generic(sig.return_annotation, tparam_dict),
     )

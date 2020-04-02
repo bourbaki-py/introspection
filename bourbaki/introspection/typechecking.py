@@ -4,6 +4,7 @@ from inspect import signature, Parameter
 import operator
 from functools import partial, lru_cache
 from warnings import warn
+from .builtin_signatures import builtin_callable_types
 from .utils import name_of
 from .imports import import_type
 from .types import (
@@ -17,6 +18,7 @@ from .types import (
     get_generic_args,
     typetypes,
     base_newtype_of,
+    concretize_typevars,
 )
 from .generic_dispatch import GenericTypeLevelSingleDispatch, const
 from .generic_dispatch_helpers import (
@@ -25,11 +27,12 @@ from .generic_dispatch_helpers import (
     CollectionWrapper,
     MappingWrapper,
     LazyWrapper,
+    PicklableWithType,
 )
 
 
 type_checker = GenericTypeLevelSingleDispatch(
-    "type_checker", isolated_bases=[typing.Union]
+    "type_checker", isolated_bases=[typing.Union, typing.Generic]
 )
 
 
@@ -99,9 +102,6 @@ class CallableTypeChecker:
         self.return_ = return_
 
     def __call__(self, func):
-        if not callable(func):
-            return False
-
         if not isinstance(func, self.callable_):
             return False
 
@@ -112,54 +112,70 @@ class CallableTypeChecker:
             return True
 
         try:
-            sig = signature(func)
-        except ValueError:
-            warn(
-                "Can't check that {} is {}; call to inspect.signature() failed - most likely an extension or builtin; "
-                "returning True".format(
-                    func,
-                    "{}[{}, {}]".format(name_of(self.callable_), signature_, return_),
-                )
-            )
-            return True
+            runtime_type = builtin_callable_types.get(func)
+        except TypeError:
+            # unhashable
+            runtime_type = None
 
-        if signature_ is Ellipsis:
-            # our signature is unspecified so we don't care about this signature, only the return types
-            # give the benefit of the doubt if the return wasn't annotated
-            if sig.return_annotation is empty:
-                return True
-            else:
-                return issubclass_generic(sig.return_annotation, return_)
+        if runtime_type is None:
+            try:
+                runtime_type = func.__orig_class__
+            except AttributeError:
+                try:
+                    sig = signature(func)
+                except ValueError:
+                    warn(
+                        "Can't check that {} is {}; call to inspect.signature() failed - most likely an extension or builtin; "
+                        "returning True".format(
+                            func,
+                            "{}[{}, {}]".format(name_of(self.callable_), signature_, return_),
+                        )
+                    )
+                    return True
 
-        this_sig = []
-        freeze = False
-        for p in sig.parameters.values():
-            if freeze:
-                # no required args past the ones specified
-                if p.default is empty and p.kind not in (
-                    Parameter.VAR_POSITIONAL,
-                    Parameter.VAR_KEYWORD,
-                ):
-                    return False
-            else:
-                t = object if p.annotation is empty else p.annotation
-                if p.kind in (
-                    Parameter.POSITIONAL_ONLY,
-                    Parameter.POSITIONAL_OR_KEYWORD,
-                ):
-                    this_sig.append(t)
-                elif p.kind is Parameter.VAR_POSITIONAL:
-                    this_sig.extend([t] * (len(signature_) - len(this_sig)))
-                else:
-                    break
-                freeze = len(this_sig) == len(signature_)
+                if signature_ is Ellipsis:
+                    # our signature is unspecified so we don't care about this signature, only the return types
+                    # give the benefit of the doubt if the return wasn't annotated
+                    if sig.return_annotation is empty:
+                        return True
+                    else:
+                        return issubclass_generic(sig.return_annotation, return_)
 
-        this_return = sig.return_annotation
-        if this_return is empty:
-            # give the benefit of the doubt
-            this_return = return_
-        runtime_type = typing.Callable[this_sig, this_return]
-        return issubclass_generic(runtime_type, (self.callable_, *signature_, return_))
+                this_sig = []
+                freeze = False
+                for p in sig.parameters.values():
+                    if freeze:
+                        # no required args past the ones specified
+                        if p.default is empty and p.kind not in (
+                            Parameter.VAR_POSITIONAL,
+                            Parameter.VAR_KEYWORD,
+                        ):
+                            return False
+                    else:
+                        t = object if p.annotation is empty else p.annotation
+                        if p.kind in (
+                            Parameter.POSITIONAL_ONLY,
+                            Parameter.POSITIONAL_OR_KEYWORD,
+                        ):
+                            this_sig.append(t)
+                        elif p.kind is Parameter.VAR_POSITIONAL:
+                            this_sig.extend([t] * (len(signature_) - len(this_sig)))
+                        else:
+                            break
+                        freeze = len(this_sig) == len(signature_)
+
+                this_return = sig.return_annotation
+                if this_return is empty:
+                    this_return = object
+
+                runtime_type = (typing.Callable, *this_sig, this_return)
+
+        test_type = (self.callable_, *signature_, return_)
+        if isinstance(runtime_type, list):
+            # builtin signatures - can't use Union
+            return any(issubclass_generic(concretize_typevars(t), test_type) for t in runtime_type)
+        else:
+            return issubclass_generic(concretize_typevars(runtime_type), test_type)
 
     @property
     def n_args(self):
@@ -184,6 +200,24 @@ class CallableTypeChecker:
             else reconstruct_generic(sig)
         )
         self.__dict__.update(state)
+
+
+@type_checker.register(typing.Generic)
+class GenericTypeChecker(PicklableWithType):
+    def __init__(self, type_, *args):
+        self.origin = type_
+        super().__init__(type_, *args)
+
+    def __call__(self, value):
+        try:
+            value_cls = value.__orig_class__
+        except AttributeError:
+            value_cls = type(value)
+            this_cls = self.origin
+        else:
+            this_cls = self.type_
+
+        return issubclass_generic(value_cls, this_cls)
 
 
 @type_checker.register(typing.Type)

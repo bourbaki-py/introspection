@@ -201,6 +201,12 @@ def concretize_typevars_signature(sig: CallableSignature, dont_recurse=()):
     return list(map(concretize_typevars, sig, repeat(dont_recurse)))
 
 
+# deconstructed generic type
+@concretize_typevars.register(tuple)
+def concretize_typevars_signature(type: tuple, dont_recurse=()):
+    return (type[0], *map(concretize_typevars, type[1:], repeat(dont_recurse)))
+
+
 # turn a fully evaluated generic type into a (generic, *args) tuple
 
 
