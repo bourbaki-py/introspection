@@ -6,7 +6,7 @@ import pytest
 func = SingleValueDispatch("func")
 
 # fallback
-@func.register(lambda x: True)s
+@func.register(lambda x: True)
 def identity(x):
     return x
 
