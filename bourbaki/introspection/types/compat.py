@@ -148,8 +148,11 @@ else:  # pragma: no cover
         return tuple(b for b in bases if get_generic_origin(b) is not org)
 
 
-class CallableSignature(tuple):
-    pass
+class CallableSignature(list):
+    """hashable list subclass for parameterizing Callable while allowing lru_cache to work
+    on various type-level functions"""
+    def __hash__(self):
+        return hash(tuple(self))
 
 
 # get the base generic origin of a parameterized generic
@@ -184,7 +187,6 @@ def _get_alias_origin(
 # get concrete args from a generic
 
 # we have to monkey-patch this for now due to a bug in typing_inspect
-
 
 def _eval_args(args):
     """Internal helper for get_args."""

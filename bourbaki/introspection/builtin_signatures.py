@@ -25,6 +25,11 @@ T = TypeVar("T")
 O = TypeVar("O")
 
 
+# We use these for instance checks on builtin _types_ as instances of callable types,
+# i.e. isinstance_generic(int, Callable[[object], int]) == True
+# and that is why those with overloaded signatures are represented as _lists_ rather than Unions.
+# A generic subclass check with a Union in the first position requires _all_ types in the union
+# to be subtypes of the type in the second position
 builtin_callable_types = {
     int: [
         Callable[[Union[Number, str]], int],

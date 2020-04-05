@@ -135,6 +135,10 @@ class CallableTypeChecker:
                     )
                     return True
 
+                if isinstance(func, type) and sig.return_annotation is empty:
+                    # types generally return instances of themselves on calling
+                    sig = sig.replace(return_annotation=func)
+
                 if signature_ is Ellipsis:
                     # our signature is unspecified so we don't care about this signature, only the return types
                     # give the benefit of the doubt if the return wasn't annotated
