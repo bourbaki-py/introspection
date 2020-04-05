@@ -1,7 +1,7 @@
 # coding:utf-8
 from typing import Mapping, Callable, Hashable, Any, Optional
 from inspect import Parameter
-import collections
+import collections.abc
 from functools import lru_cache
 from multipledispatch import Dispatcher
 from types import MethodType
@@ -79,7 +79,7 @@ class SingleValueDispatch:
     def register_fork(
         self, value_mapping: Optional[Mapping[Hashable, Callable]] = None
     ):
-        if not isinstance(value_mapping, collections.Mapping):  # pragma: no cover
+        if not isinstance(value_mapping, collections.abc.Mapping):  # pragma: no cover
             raise TypeError(
                 "value_mapping must be a Mapping instance; got {}".format(
                     type(value_mapping)
