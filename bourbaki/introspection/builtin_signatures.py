@@ -22,6 +22,7 @@ A = TypeVar("A", bound=SupportsAbs)
 N = TypeVar("N", bound=Number)
 H = TypeVar("H", bound=Hashable)
 T = TypeVar("T")
+U = TypeVar("U")
 O = TypeVar("O")
 
 
@@ -38,7 +39,7 @@ builtin_callable_types = {
     float: Callable[[Union[Number, str]], float],
     complex: [Callable[[str], complex], Callable[[Number, Number], complex]],
     bool: Callable[[Any], bool],
-    # leaving out abs - generic in the return type
+    abs: [Callable[[A], A], Callable[[complex], float]],
     all: Callable[[Iterable], bool],
     any: Callable[[Iterable], bool],
     ascii: Callable[[Any], str],
@@ -77,9 +78,23 @@ builtin_callable_types = {
     iter: Callable[[Iterable[T]], Iterator[T]],
     len: Callable[[Collection], int],
     list: Callable[[Iterable[T]], List[T]],
-    map: Callable[[Callable[[T], O], Iterable[T]], Iterator[O]],
-    max: Callable[[Iterable[N]], N],
-    min: Callable[[Iterable[N]], N],
+    # technically variadic, no way to check all possibilities
+    map: [
+        Callable[[Callable[[T], O], Iterable[T]], Iterator[O]],
+        Callable[[Callable[[T, U], O], Iterable[T], Iterable[U]], Iterator[O]],
+    ],
+    # technically variadic, no way to check all possibilities
+    max: [
+        Callable[[Iterable[N]], N],
+        Callable[[N, N], N],
+        Callable[[N, N, N], N],
+    ],
+    # technically variadic, no way to check all possibilities
+    min: [
+        Callable[[Iterable[N]], N],
+        Callable[[N, N], N],
+        Callable[[N, N, N], N],
+    ],
     next: Callable[[Iterator[T]], T],
     oct: Callable[[int], str],
     ord: Callable[[str], int],
@@ -89,10 +104,13 @@ builtin_callable_types = {
     set: Callable[[Iterable[H]], Set[H]],
     # leaving out setattr - only for side effects
     sorted: Callable[[Iterable[T]], List[T]],
-    repr: Callable[[Any], str],
     sum: [Callable[[Iterable[N]], N], Callable[[Iterable[N], N], N]],
     tuple: Callable[[Iterable[T]], Tuple[T, ...]],
     type: Callable[[Any], Type],
     # leaving out vars - no constraint on values of return type
-    # leaving out zip - variadic
+    # technically variadic, no way to check all possibilities
+    zip: [
+        Callable[[Iterable[T], Iterable[U]], Iterator[Tuple[T, U]]],
+        Callable[[Iterable[T], Iterable[U], Iterable[O]], Iterator[Tuple[T, U, O]]],
+    ]
 }
