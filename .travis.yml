@@ -4,6 +4,8 @@ python:
 - '3.7'
 install:
 - python setup.py install
+# for visualization tests
+- pip install graphviz networkx
 script:
 - rm -rf .pytest_cache/
 - python setup.py test

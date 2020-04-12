@@ -53,13 +53,7 @@ def refines(sig1: Signature, sig2: Signature) -> bool:
     )
 
 
-def generalizes(sig1: Signature, sig2: Signature) -> bool:
-    return len(sig1) == len(sig2) and all(
-        issubclass_generic(t2, t1) for t1, t2 in zip(sig1, sig2)
-    )
-
-
-def verbose_call(f):
+def verbose_call(f):  # pragma: no cover (debug)
     def verbose_f(*args):
         result = f(*args)
         print(call_repr(f, args) + " -> {}".format(result))
@@ -74,32 +68,6 @@ def call_repr(f, args, to_str=repr):
 
 def type_str(t):
     return re.sub(r"\btyping\.\b", "", str(t))
-
-
-def _deconstruct_signature(sig):
-    return tuple(map(deconstruct_generic, sig))
-
-
-def _reconstruct_signature(sig):
-    return tuple(map(reconstruct_generic, sig))
-
-
-def _deconstruct_collection(coll):
-    return [_deconstruct_signature(sig) for sig in coll]
-
-
-def _reconstruct_collection(coll, type_):
-    return type_(_reconstruct_signature(sig) for sig in coll)
-
-
-def _deconstruct_mapping(sigmap, values=False):
-    decons_val = _deconstruct_signature if values else lambda x: x
-    return [(_deconstruct_signature(sig), decons_val(v)) for sig, v in sigmap.items()]
-
-
-def _reconstruct_mapping(sigmap, type_=dict, values=False):
-    recons_val = _deconstruct_signature if values else lambda x: x
-    return type_((_reconstruct_signature(sig), recons_val(v)) for sig, v in sigmap)
 
 
 # Dispatchers
@@ -130,19 +98,20 @@ class GenericTypeLevelDispatch:
         return call_repr(type(self), (self.__name__,))
 
     def register(self, *sig, debug: bool = DEBUG, as_const: bool = False):
-        if debug:
+        if debug:  # pragma: no cover (debug)
             print(call_repr("{}.register".format(self.__name__), sig))
 
         sig = tuple(map(to_type_alias, sig))
 
         def dec(f):
             if as_const:
-                f = const(f)
+                self.insert(sig, const(f), debug=debug)
+            else:
+                self.insert(sig, f, debug=debug)
 
-            self.insert(sig, f, debug=debug)
-            if debug:
+            if debug:  # pragma: no cover (debug)
                 print()
-            if debug > 1:
+            if debug > 1:  # pragma: no cover (debug)
                 self.visualize(view=True, debug=True, target_sig=sig)
 
             return f
@@ -175,13 +144,13 @@ class GenericTypeLevelDispatch:
         return self
 
     def insert(self, sig, f, *, debug=DEBUG):
-        if debug:
+        if debug:  # pragma: no cover (debug)
             print("Registering function {} for signature {}".format(f, sig))
         self.funcs[sig] = f
         return self
 
     def resolve(self, sig, *, debug: bool = False):
-        if debug:
+        if debug:  # pragma: no cover (debug)
             print("Resolving signature {} for dispatcher {}".format(sig, self))
         f = self._cache.get(sig)
         if f is None:
@@ -191,13 +160,13 @@ class GenericTypeLevelDispatch:
                 best = self._most_specific(nodes, sig)
                 f = self.funcs[best]
             else:
-                if debug:
+                if debug:  # pragma: no cover (debug)
                     print("Found signature {} in {}.funcs".format(sig, self.__name__))
                 best = sig
 
             self._sig_cache[sig] = best
             self._cache[sig] = f
-        elif debug:
+        elif debug:  # pragma: no cover (debug)
             print("Found signature {} in {}._cache".format(sig, self.__name__))
         return f
 
@@ -294,7 +263,7 @@ class GenericTypeLevelDispatch:
         for sig, metadata in dag.nodes(data=True):
             f = self.funcs[sig]
             label = call_repr(f, sig, to_str=type_str)
-            if debug:
+            if debug:  # pragma: no cover (debug)
                 label = "{}: {}".format(metadata["order"], label)
             attrs = highlight if sig in highlight_sigs else no_highlight
             d.node(str(sig), label=label, **attrs)
@@ -317,27 +286,6 @@ class GenericTypeLevelDispatch:
             elif refines(sig2, sig1):
                 dag.add_edge(sig2, sig1)
         return transitive_reduction(dag)
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        funcs, cache, sig_cache = (
-            state.pop(attr) for attr in ["funcs", "_cache", "_sig_cache"]
-        )
-
-        funcs, cache = (_deconstruct_mapping(m) for m in (funcs, cache))
-        sig_cache = _deconstruct_mapping(sig_cache, values=True)
-        state["funcs"], state["_cache"], state["_sig_cache"] = funcs, cache, sig_cache
-        return state
-
-    def __setstate__(self, state):
-        funcs, cache, sig_cache = (
-            state.pop(attr) for attr in ["funcs", "_cache", "_sig_cache"]
-        )
-        state["funcs"], state["_cache"] = (
-            _reconstruct_mapping(m) for m in (funcs, cache)
-        )
-        state["_sig_cache"] = _reconstruct_mapping(sig_cache, values=True)
-        self.__dict__.update(state)
 
     def __call__(self, *types, **kwargs):
         f = self.resolve(types)
