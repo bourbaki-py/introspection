@@ -26,19 +26,6 @@ def name_of(f):
     return n
 
 
-def nice_exc_args(exc):
-    if isinstance(exc, Exception):
-        args = exc.args
-    else:
-        args = exc
-    if len(args) == 0:
-        return ""
-    elif len(args) == 1:
-        return args[0]
-    else:
-        return args
-
-
 def is_prefix(x1, x2):
     return x1 == x2[: len(x1)]
 

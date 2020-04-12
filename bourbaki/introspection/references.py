@@ -1,7 +1,7 @@
 # coding: utf-8
 from typing import Any, Callable
 from collections import OrderedDict
-from collections.abc import Mapping
+from collections.abc import Mapping, Collection
 import sys
 from itertools import chain
 
@@ -179,9 +179,16 @@ def find_refs(
 
     if attrs:
         try:
-            attrs_ = ((Attr(n), o) for n, o in obj.__dict__.items())
+            __dict__ = obj.__dict__
         except AttributeError:
-            attrs_ = ()
+            try:
+                slots = obj.__slots__
+            except AttributeError:
+                attrs_ = ()
+            else:
+                attrs_ = ((Attr(n), getattr(obj, n)) for n in slots if hasattr(obj, n))
+        else:
+            attrs_ = ((Attr(n), o) for n, o in __dict__.items())
     else:
         attrs_ = ()
 

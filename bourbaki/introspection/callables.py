@@ -24,7 +24,7 @@ from multipledispatch import dispatch
 from typing_inspect import is_generic_type
 from .types import get_generic_params, fully_concretize_type
 from .classes import most_specific_constructor
-from .utils import nice_exc_args, is_prefix, is_suffix, name_of, signature
+from .utils import is_prefix, is_suffix, name_of, signature
 
 
 class CallableABCMeta(ABCMeta):
@@ -246,7 +246,7 @@ def bind_verbosely(
         bound = sig.bind(*args, **kwargs)
     except TypeError as err:
         if name:
-            raise TypeError("{}: {}".format(name, nice_exc_args(err)))
+            raise TypeError(name, err)
         else:
             raise err
 
