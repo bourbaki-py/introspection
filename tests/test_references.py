@@ -1,3 +1,5 @@
+from sys import getsizeof
+
 import pytest
 
 from bourbaki.introspection.references import find_refs_by_size, find_refs_by_id, find_refs_by_type
@@ -23,6 +25,7 @@ class Bar:
     (l, tuple, tuple(range(10))),
     (Foo, list, l),
     (Foo, float, 123.0),
+    (Bar(l), list, l),
 ])
 def test_find_refs_by_type(obj, type_, value):
     refs = find_refs_by_type(obj, type_)
@@ -31,7 +34,7 @@ def test_find_refs_by_type(obj, type_, value):
 
 
 @pytest.mark.parametrize('obj,size,value', [
-    (l, 100, l),
+    (l, getsizeof(tuple(range(10))), l[-1]),
 ])
 def test_find_refs_by_size(obj, size, value):
     refs = find_refs_by_size(obj, size, attrs=False)
@@ -43,7 +46,7 @@ def test_find_refs_by_size(obj, size, value):
     (l, l[-1], l[-1]),
     (Foo, l, Foo.l),
     (Foo, Foo.x, Foo.x),
-    # (Bar(l), l, l)
+    (Bar(l), l, l)
 ])
 def test_find_refs_by_id(obj, target, value):
     refs = find_refs_by_id(obj, target)
