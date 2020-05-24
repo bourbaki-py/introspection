@@ -270,22 +270,12 @@ class MappingTypeChecker(_GenericContainerTypeCheckerMixin, MappingWrapper):
 
 @type_checker.register(typing.Tuple)
 class TupleTypeChecker(_GenericContainerTypeCheckerMixin, TupleWrapper):
-    _collection_cls = CollectionTypeChecker
-    require_same_len = False
     helper_cls = TupleWrapper
 
-    def __new__(cls, tup_type, *args):
-        if not args:
-            return isinstance_of(tup_type)
-        return TupleWrapper.__new__(cls, tup_type, *args)
-
     def __call__(self, value):
-        try:
-            len_ = len(value)
-        except TypeError:
-            return super().__call__(value)
-        else:
-            return len(self.funcs) == len_ and super().__call__(value)
+        if not isinstance(value, self.generic_type):
+            return False
+        return super().__call__(value)
 
 
 @type_checker.register(typing.Union)
