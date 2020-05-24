@@ -3,6 +3,7 @@ from typing import Generic
 import collections
 from functools import partial
 from inspect import Parameter
+from itertools import repeat
 from .wrappers import cached_getter
 from .imports import import_type
 from .utils import identity
@@ -85,31 +86,30 @@ class CollectionWrapper(ReducingGenericWrapper):
 
 
 class TupleWrapper(ReducingGenericWrapper):
-    _collection_cls = CollectionWrapper
     require_same_len = True
-
-    def __new__(cls, tup_type, *types):
-        if is_named_tuple_class(tup_type) and not types:
-            types = get_named_tuple_arg_types(tup_type)
-        if not types:
-            cls = cls._collection_cls
-        elif types[-1] is Ellipsis:
-            # variable-length, uniformly-typed tuple
-            cls = cls._collection_cls
-            types = types[:1]
-
-        new = object.__new__(cls)
-        cls.__init__(new, tup_type, *types)
-        return new
 
     def __init__(self, tup_type, *types):
         super().__init__(tup_type, *types)
-        if not getattr(self, "funcs", None):
-            # somehow this is being called twice in some instances - haven't identified the source
+        if is_named_tuple_class(tup_type) and not types:
+            types = get_named_tuple_arg_types(tup_type)
+
+        if not types:
+            self.require_same_len = False
+            self.funcs = (self.getter(object),)
+        elif types[-1] is Ellipsis:
+            # variable-length, uniformly-typed tuple
+            self.require_same_len = False
+            self.funcs = (self.getter(types[0]),)
+        else:
+            self.require_same_len = True
             self.funcs = tuple(self.getter(t) for t in types)
 
     def call_iter(self, arg):
-        return (d(v) for d, v in zip(self.funcs, arg))
+        if not self.require_same_len:
+            f = self.funcs[0]
+            return map(f, arg)
+        else:
+            return (d(v) for d, v in zip(self.funcs, arg))
 
     def __call__(self, value):
         if self.require_same_len and len(value) != len(self.funcs):
@@ -127,8 +127,7 @@ class NamedTupleWrapper(TupleWrapper):
 
     def __init__(self, tup_type, *types):
         super().__init__(tup_type, *types)
-        if not getattr(self, "named_funcs", None):
-            self.named_funcs = dict(zip(tup_type._fields, self.funcs))
+        self.named_funcs = dict(zip(tup_type._fields, self.funcs))
         if self.reduce_named is None:
             self.reduce_named = self.get_named_reducer(tup_type)
 
