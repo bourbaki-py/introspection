@@ -12,10 +12,9 @@ def classpath(t: type):
     org = get_generic_origin(t)
     if org is Union:
         return "Union"
-    if org is Any:
+    elif org is Any:
         return "Any"
-
-    if issubclass(org, LazyType):
+    elif org is LazyType:
         a = get_generic_args(t)[0]
         if isinstance(a, str):
             return a
@@ -37,7 +36,7 @@ if NEW_TYPING:
     def get_qualname(t: type):
         if t.__module__ == "typing" and isinstance(t, _GenericAlias):
             return t._name
-        return getattr(t, "__qualname__", get_generic_origin(t).__qualname__)
+        return getattr(t, "__qualname__", getattr(t, "__name__"))
 
     @classpath.register(_GenericAlias)
     def classpath_generic_alias(t: _GenericAlias):
@@ -47,9 +46,8 @@ if NEW_TYPING:
 
 
 else:
-
     def get_qualname(t: type):
-        return getattr(t, "__qualname__", get_generic_origin(t).__qualname__)
+        return getattr(t, "__qualname__", gettr(t, "__name__"))
 
 
 def parameterized_classpath(t: type):
@@ -63,8 +61,10 @@ def parameterized_classpath(t: type):
 
     args = get_generic_args(t, evaluate=True)
     origin = get_generic_origin(t)
+    print("PARAM CLSS")
     if not args:
-        return classpath(origin)
+        print("NO ARGS")
+        return classpath(t)
     return "{}[{}]".format(classpath(origin), ",".join(map(_inner, args)))
 
 
