@@ -46,6 +46,7 @@ if NEW_TYPING:
 
 
 else:
+
     def get_qualname(t: type):
         return getattr(t, "__qualname__", gettr(t, "__name__"))
 

@@ -33,6 +33,7 @@ def _get_generic_args(tup, evaluate=EVALUATE_DEFAULT):
 
 # main helper - evaluates forward refs, substitutes concrete constraint types or specified type args for type vars
 
+
 def fully_concretize_type(
     t: Type,
     param_dict: Optional[Mapping[Any, Type]],
@@ -45,6 +46,7 @@ def fully_concretize_type(
 
 # fetch module namespace in which to evaluate a forwardref
 
+
 def get_globals(t: Type) -> Optional[Dict[str, Any]]:
     try:
         mod = __import__(t.__module__)
@@ -55,6 +57,7 @@ def get_globals(t: Type) -> Optional[Dict[str, Any]]:
 
 
 # materialize delayed string references (forward refs) in type annotations
+
 
 def eval_forward_refs(t, globals_, dont_recurse=()):
     if t in dont_recurse:
@@ -99,6 +102,7 @@ def eval_forward_refs(t, globals_, dont_recurse=()):
 
 
 # turn a (generic, *args) tuple into a fully evaluated generic type
+
 
 @singledispatch
 def eval_type_tree(t):
@@ -159,6 +163,7 @@ def eval_args(tup):
 
 # turn a generic type whose type tree may contain type variables into a concrete type by substituting appropriate
 # most-general types for type variables
+
 
 def constraint_type(tvar: TypeVar):
     ts = get_constraints(tvar)
@@ -229,6 +234,7 @@ def concretize_typevars_signature(type: tuple, dont_recurse=()):
 
 # turn a fully evaluated generic type into a (generic, *args) tuple
 
+
 @lru_cache(None)
 def deconstruct_generic(t):
     if isinstance(t, TypeVar):
@@ -258,6 +264,7 @@ reconstruct_generic = eval_type_tree
 
 # substitute types for corresponding type vars in a generic type recursively
 
+
 @trace
 def reparameterize_generic(t, tvar_map, evaluate=True):
     if not tvar_map:
@@ -286,6 +293,7 @@ def reparameterize_generic(t, tvar_map, evaluate=True):
 
 
 # get mapping from type var to type arg from a parameterized generic
+
 
 def get_param_dict(t):
     args = get_generic_args(t)

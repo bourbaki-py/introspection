@@ -84,17 +84,9 @@ builtin_callable_types = {
         Callable[[Callable[[T, U], O], Iterable[T], Iterable[U]], Iterator[O]],
     ],
     # technically variadic, no way to check all possibilities
-    max: [
-        Callable[[Iterable[N]], N],
-        Callable[[N, N], N],
-        Callable[[N, N, N], N],
-    ],
+    max: [Callable[[Iterable[N]], N], Callable[[N, N], N], Callable[[N, N, N], N]],
     # technically variadic, no way to check all possibilities
-    min: [
-        Callable[[Iterable[N]], N],
-        Callable[[N, N], N],
-        Callable[[N, N, N], N],
-    ],
+    min: [Callable[[Iterable[N]], N], Callable[[N, N], N], Callable[[N, N, N], N]],
     next: Callable[[Iterator[T]], T],
     oct: Callable[[int], str],
     ord: Callable[[str], int],
@@ -112,5 +104,5 @@ builtin_callable_types = {
     zip: [
         Callable[[Iterable[T], Iterable[U]], Iterator[Tuple[T, U]]],
         Callable[[Iterable[T], Iterable[U], Iterable[O]], Iterator[Tuple[T, U, O]]],
-    ]
+    ],
 }
