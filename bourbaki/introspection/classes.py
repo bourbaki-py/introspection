@@ -61,9 +61,7 @@ def parameterized_classpath(t: type):
 
     args = get_generic_args(t, evaluate=True)
     origin = get_generic_origin(t)
-    print("PARAM CLSS")
     if not args:
-        print("NO ARGS")
         return classpath(t)
     return "{}[{}]".format(classpath(origin), ",".join(map(_inner, args)))
 
