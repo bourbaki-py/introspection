@@ -1,7 +1,7 @@
 # coding:utf-8
 import typing
 import enum
-from .inspection import is_top_type, is_named_tuple_class
+from .inspection import is_top_type, is_named_tuple_class, is_newtype
 
 STDLIB_MODULES = {
     "builtins",
@@ -163,6 +163,15 @@ class NamedTupleABCMeta(_InstanceCheckFromSubclassCheck):
 
 
 class NamedTupleABC(tuple, metaclass=NamedTupleABCMeta):
+    pass
+
+
+class NewTypeABCMeta(type):
+    def __subclasscheck__(self, subclass):
+        return is_newtype(subclass)
+
+
+class NewTypeABC(metaclass=NewTypeABCMeta):
     pass
 
 

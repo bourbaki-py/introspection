@@ -20,6 +20,7 @@ from .types import (
     base_newtype_of,
     concretize_typevars,
 )
+from .types.abcs import NewTypeABC
 from .generic_dispatch import GenericTypeLevelSingleDispatch, const
 from .generic_dispatch_helpers import (
     UnionWrapper,
@@ -32,13 +33,13 @@ from .generic_dispatch_helpers import (
 
 
 type_checker = GenericTypeLevelSingleDispatch(
-    "type_checker", isolated_bases=[typing.Union, typing.Generic]
+    "type_checker", isolated_bases=[typing.Union, typing.Generic, NewTypeABC]
 )
 
 
 @lru_cache(None)
 def type_checker_for(type_):
-    return type_checker(base_newtype_of(type_))
+    return type_checker(type_)
 
 
 def isinstance_generic(obj, type_):
@@ -50,7 +51,7 @@ def _isinstance(type_, obj):
 
 
 class _GenericTypeCheckerMixin:
-    getter = type_checker
+    getter = staticmethod(type_checker_for)
 
 
 class _GenericContainerTypeCheckerMixin(_GenericTypeCheckerMixin):
@@ -63,7 +64,6 @@ class _GenericContainerTypeCheckerMixin(_GenericTypeCheckerMixin):
             return isinstance_of(org)
 
         new = object.__new__(cls)
-        cls.__init__(new, org, *args)
         return new
 
     def __call__(self, value):
@@ -92,6 +92,11 @@ def isinstance_of(type_, *args):
         return const(True)
     type_ = to_concrete_type(type_)
     return partial(_isinstance, type_)
+
+
+@type_checker.register(NewTypeABC)
+def new_type_typechecker(type_: NewTypeABC):
+    return type_checker(base_newtype_of(type_))
 
 
 @type_checker.register(typing.Callable)
@@ -301,7 +306,6 @@ class _TypeAliasTypeChecker:
             return isinstance_of(type_)
 
         new = object.__new__(cls)
-        cls.__init__(new, type_, *args)
         return new
 
     def __init__(self, type_, arg=object):
