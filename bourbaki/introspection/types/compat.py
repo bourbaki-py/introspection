@@ -10,7 +10,7 @@ import typing_inspect
 from typing_inspect import (
     is_callable_type,
     get_origin,
-    get_parameters,
+    get_parameters as ti_get_parameters,
     get_generic_bases as _get_generic_bases,
 )
 from ..utils import identity
@@ -38,6 +38,20 @@ NON_TYPING_STDLIB_MODULES = frozenset(
 
 ForwardRef = None
 _GenericAlias = None
+
+
+def _get_parameters_monkeypatch(tp):
+    """This is only necessary until typing_inspect makes a new release
+    that works with Python 3.9 and we can lower-bound against that.
+    """
+    try:
+        return ti_get_parameters(tp)
+    except AttributeError:
+        return ()
+
+
+get_parameters = _get_parameters_monkeypatch
+
 
 if sys.version_info[:2] >= (3, 7):  # pragma: no cover
     from typing import ForwardRef, _GenericAlias
