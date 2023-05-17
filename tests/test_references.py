@@ -3,8 +3,8 @@ from sys import getsizeof
 import pytest
 
 from bourbaki.introspection.references import (
-    find_refs_by_size,
     find_refs_by_id,
+    find_refs_by_size,
     find_refs_by_type,
 )
 

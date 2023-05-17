@@ -1,8 +1,9 @@
 # coding:utf-8
-from types import MethodType
 from functools import update_wrapper
-from inspect import signature, Signature, Parameter
-from .callables import bind_verbosely, validate_overrides, merged_signature
+from inspect import Parameter, Signature, signature
+from types import MethodType
+
+from .callables import bind_verbosely, merged_signature, validate_overrides
 
 
 # decorators

@@ -1,9 +1,11 @@
 # coding:utf-8
-import pytest
-from bourbaki.introspection.classes import classpath, parameterized_classpath
-from bourbaki.introspection.callables import function_classpath
-from typing import List, Tuple, Mapping, Callable, Generic, TypeVar
 from pathlib import Path
+from typing import Callable, Generic, List, Mapping, Tuple, TypeVar
+
+import pytest
+
+from bourbaki.introspection.callables import function_classpath
+from bourbaki.introspection.classes import classpath, parameterized_classpath
 
 
 def some_func():

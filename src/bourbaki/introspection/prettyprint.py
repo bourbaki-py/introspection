@@ -1,7 +1,8 @@
 # coding:utf-8
-from typing import Mapping, Union
 from collections.abc import Mapping as _Mapping
 from numbers import Number
+from typing import Mapping, Union
+
 from multipledispatch import dispatch
 
 NoneType = type(None)

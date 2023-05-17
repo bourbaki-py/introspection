@@ -1,31 +1,32 @@
 # coding: utf-8
-from typing import List, Generic, Tuple, TypeVar, Union
-import typing
 import sys
-from functools import lru_cache
-from inspect import getmro, signature, Signature, Parameter
-from itertools import repeat, islice
 import types
-from .inspection import (
-    is_tuple_origin,
-    is_top_type,
-    is_callable_origin,
-    is_newtype,
-    base_newtype_of,
-    newtype_chain,
-    get_generic_args,
-    generic_metadata,
-    normalized_origin_args,
-    is_named_tuple_class,
-)
+import typing
+from functools import lru_cache
+from inspect import Parameter, Signature, getmro, signature
+from itertools import islice, repeat
+from typing import Generic, List, Tuple, TypeVar, Union
+
+from ..debug import trace
 from .compat import (
+    EVALUATE_DEFAULT,
     get_generic_origin,
     get_generic_params,
     to_concrete_type,
-    EVALUATE_DEFAULT,
 )
 from .evaluation import concretize_typevars, reparameterize_generic
-from ..debug import trace
+from .inspection import (
+    base_newtype_of,
+    generic_metadata,
+    get_generic_args,
+    is_callable_origin,
+    is_named_tuple_class,
+    is_newtype,
+    is_top_type,
+    is_tuple_origin,
+    newtype_chain,
+    normalized_origin_args,
+)
 
 T_co = TypeVar("T_co", covariant=True)
 

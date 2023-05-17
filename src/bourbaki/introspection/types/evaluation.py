@@ -1,20 +1,27 @@
 # coding:utf-8
-from typing import Dict, TypeVar, Union, Type, Optional, Mapping, Any, NewType
 from collections import OrderedDict
-from functools import singledispatch, lru_cache
+from functools import lru_cache, singledispatch
 from itertools import repeat
-from typing_inspect import get_constraints, get_bound
-from .compat import get_generic_origin, get_generic_params, EVALUATE_DEFAULT
-from .compat import ForwardRef, CallableSignature
-from .abcs import LazyType, PseudoGenericMeta
+from typing import Any, Dict, Mapping, NewType, Optional, Type, TypeVar, Union
+
+from typing_inspect import get_bound, get_constraints
+
 from ..debug import trace
+from .abcs import LazyType, PseudoGenericMeta
+from .compat import (
+    EVALUATE_DEFAULT,
+    CallableSignature,
+    ForwardRef,
+    get_generic_origin,
+    get_generic_params,
+)
 from .inspection import (
-    is_callable_origin,
-    is_top_type,
-    is_newtype,
     get_generic_args,
-    normalized_origin_args,
+    is_callable_origin,
     is_named_tuple_class,
+    is_newtype,
+    is_top_type,
+    normalized_origin_args,
 )
 
 _newtype_cache = {}

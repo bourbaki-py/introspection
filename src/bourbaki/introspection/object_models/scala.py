@@ -1,9 +1,10 @@
 # coding:utf-8
-from inspect import signature, Signature
+from inspect import Signature, signature
 from itertools import islice
 from operator import attrgetter
+
 from ..callables import bind
-from ..simple_repr import set_simple_repr_init_args, set_simple_repr_class_attrs
+from ..simple_repr import set_simple_repr_class_attrs, set_simple_repr_init_args
 from ..subclassing import SubclassMutatorMethod
 
 

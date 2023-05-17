@@ -1,18 +1,20 @@
 # coding:utf-8
-from typing import *
 import pathlib
 import re
 import site
+from typing import *
+
 import pytest
+
 from bourbaki.introspection.imports import (
-    import_object,
-    object_from,
-    import_type,
-    module_from,
-    lazy_imports,
-    import_,
     from_,
     get_globals,
+    import_,
+    import_object,
+    import_type,
+    lazy_imports,
+    module_from,
+    object_from,
 )
 
 try:

@@ -1,6 +1,6 @@
 # coding:utf-8
-from inspect import signature
 from functools import lru_cache
+from inspect import signature
 
 py_name_re = r"[_a-zA-Z][_a-zA-Z0-9]*"
 

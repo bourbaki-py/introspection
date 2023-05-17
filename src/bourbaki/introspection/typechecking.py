@@ -1,36 +1,36 @@
 # coding:utf-8
-import typing
-from inspect import signature, Parameter
 import operator
-from functools import partial, lru_cache
+import typing
+from functools import lru_cache, partial
+from inspect import Parameter, signature
 from warnings import warn
+
 from .builtin_signatures import builtin_callable_types
-from .utils import name_of
+from .generic_dispatch import GenericTypeLevelSingleDispatch, const
+from .generic_dispatch_helpers import (
+    CollectionWrapper,
+    LazyWrapper,
+    MappingWrapper,
+    PicklableWithType,
+    TupleWrapper,
+    UnionWrapper,
+)
 from .imports import import_type
 from .types import (
     LazyType,
-    is_top_type,
-    to_concrete_type,
-    constraint_type,
-    issubclass_generic,
-    reconstruct_generic,
-    deconstruct_generic,
-    get_generic_args,
-    typetypes,
     base_newtype_of,
     concretize_typevars,
+    constraint_type,
+    deconstruct_generic,
+    get_generic_args,
+    is_top_type,
+    issubclass_generic,
+    reconstruct_generic,
+    to_concrete_type,
+    typetypes,
 )
 from .types.abcs import NewTypeABC
-from .generic_dispatch import GenericTypeLevelSingleDispatch, const
-from .generic_dispatch_helpers import (
-    UnionWrapper,
-    TupleWrapper,
-    CollectionWrapper,
-    MappingWrapper,
-    LazyWrapper,
-    PicklableWithType,
-)
-
+from .utils import name_of
 
 type_checker = GenericTypeLevelSingleDispatch(
     "type_checker", isolated_bases=[typing.Union, typing.Generic, NewTypeABC]

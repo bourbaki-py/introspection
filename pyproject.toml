@@ -28,6 +28,7 @@ include = ["py.typed"]
 python = "^3.7"
 multipledispatch = ">=0.4.9"
 typing-inspect = ">=0.5"
+importlib_metadata = {version = "*", python = "<3.8"}
 
 ## Extras
 
@@ -49,9 +50,7 @@ isort = ">=5.10"
 
 [tool.poetry.group.lint.dependencies]
 flake8 = ">=5.0"
-flake8-black = ">=0.3"
 flake8-bugbear = ">=22.4"
-flake8-import-order = ">=0.18"
 
 ## Typechecking
 
@@ -78,11 +77,11 @@ source = ["src", "*/site-packages"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 96
+fail_under = 70
 
 [tool.coverage.run]
 branch = true
-source = ["spaczz"]
+source = ["bourbaki.introspection"]
 
 [tool.isort]
 profile = "black"

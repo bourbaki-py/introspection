@@ -1,7 +1,8 @@
 from numbers import Real
-from bourbaki.introspection.polymorphism import SingleValueDispatch
 
 import pytest
+
+from bourbaki.introspection.polymorphism import SingleValueDispatch
 
 func = SingleValueDispatch("func")
 

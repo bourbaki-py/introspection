@@ -1,20 +1,20 @@
 # coding:utf-8
-from typing import Tuple, Union, Callable, Any, TypeVar
-import typing
+import collections
 import re
 import sys
-import collections
-from itertools import combinations
+import typing
 from functools import singledispatch
+from itertools import combinations
+from typing import Any, Callable, Tuple, TypeVar, Union
+
 import typing_inspect
-from typing_inspect import (
-    is_callable_type,
-    get_origin,
-    get_parameters as ti_get_parameters,
-    get_generic_bases as _get_generic_bases,
-)
-from ..utils import identity
+from typing_inspect import get_generic_bases as _get_generic_bases
+from typing_inspect import get_origin
+from typing_inspect import get_parameters as ti_get_parameters
+from typing_inspect import is_callable_type
+
 from ..debug import trace
+from ..utils import identity
 
 NON_TYPING_STDLIB_MODULES = frozenset(
     (

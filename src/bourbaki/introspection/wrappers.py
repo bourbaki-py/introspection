@@ -1,6 +1,7 @@
 # coding:utf-8
-from inspect import signature, Parameter
-from functools import update_wrapper, lru_cache
+from functools import lru_cache, update_wrapper
+from inspect import Parameter, signature
+
 from .callables import name_of
 
 empty = Parameter.empty

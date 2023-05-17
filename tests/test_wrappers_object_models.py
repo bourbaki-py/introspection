@@ -1,16 +1,18 @@
 # coding:utf-8
-import pytest
 from inspect import signature
-from bourbaki.introspection.subclassing import subclass_mutator_method, subclass_method
-from bourbaki.introspection.simple_repr import with_simple_repr
+from typing import List, Sequence, Set, Tuple
+
+import pytest
+
 from bourbaki.introspection.object_models.scala import (
     MultipleInheritanceError,
     ScalaClass,
     val,
     var,
 )
+from bourbaki.introspection.simple_repr import with_simple_repr
+from bourbaki.introspection.subclassing import subclass_method, subclass_mutator_method
 from bourbaki.introspection.typechecking import type_checker
-from typing import List, Tuple, Set, Sequence
 
 
 @with_simple_repr(use_qualname=False, inspect_attrs=("things", "x", "y", "foo"))

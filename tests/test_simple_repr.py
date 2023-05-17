@@ -1,5 +1,6 @@
-from bourbaki.introspection.simple_repr import with_simple_repr, update_repr
 import pytest
+
+from bourbaki.introspection.simple_repr import update_repr, with_simple_repr
 
 module = __name__ + "."
 

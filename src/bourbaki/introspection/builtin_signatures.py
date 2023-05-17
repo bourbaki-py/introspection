@@ -1,21 +1,21 @@
 """Signatures for builtins - these raise error on call to inspect.signature"""
 from numbers import Number
 from typing import (
+    Any,
+    Callable,
+    Collection,
+    FrozenSet,
+    Hashable,
     Iterable,
     Iterator,
-    Collection,
-    Callable,
-    Sequence,
-    Hashable,
     List,
-    Tuple,
+    Sequence,
     Set,
-    FrozenSet,
-    Type,
-    Union,
-    Any,
     SupportsAbs,
+    Tuple,
+    Type,
     TypeVar,
+    Union,
 )
 
 A = TypeVar("A", bound=SupportsAbs)

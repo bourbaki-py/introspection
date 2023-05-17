@@ -1,32 +1,33 @@
 # coding:utf-8
+import re
+from itertools import chain, combinations
+from tempfile import mktemp
 from typing import (
-    List,
-    Tuple,
-    Dict,
-    Collection,
+    Any,
     Callable,
+    Collection,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Tuple,
     Type,
     Union,
-    Optional,
-    Generic,
-    Any,
 )
-import re
-from tempfile import mktemp
-from itertools import chain, combinations
+
 from .debug import DEBUG
-from .wrappers import const
-from .utils import name_of
 from .types import (
-    issubclass_generic,
     deconstruct_generic,
-    reconstruct_generic,
-    to_type_alias,
-    reparameterized_bases,
-    get_generic_origin,
     get_generic_args,
+    get_generic_origin,
     is_generic_type,
+    issubclass_generic,
+    reconstruct_generic,
+    reparameterized_bases,
+    to_type_alias,
 )
+from .utils import name_of
+from .wrappers import const
 
 Signature = Tuple[type, ...]
 
@@ -221,8 +222,8 @@ class GenericTypeLevelDispatch:
             from networkx import (
                 DiGraph,
                 induced_subgraph,
-                transitive_reduction,
                 neighbors,
+                transitive_reduction,
             )
         except ImportError:
             raise ImportError(

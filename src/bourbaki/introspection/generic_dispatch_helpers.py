@@ -1,15 +1,16 @@
 # coding:utf-8
-from typing import Generic
 import collections
 from functools import partial
 from inspect import Parameter
 from itertools import repeat
-from .wrappers import cached_getter
+from typing import Generic
+
 from .imports import import_type
-from .utils import identity
-from .types.evaluation import deconstruct_generic, reconstruct_generic
-from .types.inspection import is_named_tuple_class, get_named_tuple_arg_types
 from .types.compat import get_constructor_for
+from .types.evaluation import deconstruct_generic, reconstruct_generic
+from .types.inspection import get_named_tuple_arg_types, is_named_tuple_class
+from .utils import identity
+from .wrappers import cached_getter
 
 NoneType = type(None)
 Empty = Parameter.empty

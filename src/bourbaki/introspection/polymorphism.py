@@ -1,10 +1,11 @@
 # coding:utf-8
-from typing import Mapping, Callable, Hashable, Any, Optional
-from inspect import Parameter
 import collections.abc
 from functools import lru_cache
-from multipledispatch import Dispatcher
+from inspect import Parameter
 from types import MethodType
+from typing import Any, Callable, Hashable, Mapping, Optional
+
+from multipledispatch import Dispatcher
 
 Empty = Parameter.empty
 

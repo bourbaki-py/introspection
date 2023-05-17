@@ -1,9 +1,9 @@
 # coding: utf-8
-from typing import Any, Callable
-from collections import OrderedDict
-from collections.abc import Mapping, Collection
 import sys
+from collections import OrderedDict
+from collections.abc import Collection, Mapping
 from itertools import chain
+from typing import Any, Callable
 
 
 class Attr(str):

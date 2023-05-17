@@ -1,29 +1,31 @@
 # coding:utf-8
-from typing import (
-    Union,
-    Sequence,
-    Mapping,
-    Dict,
-    Set,
-    Tuple,
-    Callable,
-    Iterable,
-    Any,
-    Optional,
-)
+import functools
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from collections.abc import Mapping as MappingABC
 from functools import lru_cache, singledispatch, update_wrapper
-import functools
-from inspect import Signature, Parameter, BoundArguments
+from inspect import BoundArguments, Parameter, Signature
 from itertools import chain
 from operator import itemgetter
 from types import MappingProxyType
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
+
 from multipledispatch import dispatch
 from typing_inspect import is_generic_type
-from .types import get_generic_params, fully_concretize_type
+
 from .classes import most_specific_constructor
+from .types import fully_concretize_type, get_generic_params
 from .utils import is_prefix, is_suffix, name_of, signature
 
 

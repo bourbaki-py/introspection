@@ -1,16 +1,17 @@
 # coding:utf-8
-from typing import Tuple, Union
-from types import MethodType
 from functools import partial, wraps
+from inspect import Parameter, signature
+from types import MethodType
+from typing import Tuple, Union
 from warnings import warn
-from inspect import signature, Parameter
+
 from .callables import (
     bind,
     call_repr,
-    params_of_kind,
     has_varargs,
-    varkwargs_name,
+    params_of_kind,
     varargs_name,
+    varkwargs_name,
 )
 
 # this is set on the class; we don't use __signature__ to prevent inspect.signature giving erroneous sigs on subclasses

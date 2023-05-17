@@ -1,9 +1,10 @@
 # coding:utf-8
-from typing import Dict, Tuple, Union, Callable
+import re
 from enum import Enum
 from itertools import chain
-import re
-from .utils import py_name_re, py_dot_name_re
+from typing import Callable, Dict, Tuple, Union
+
+from .utils import py_dot_name_re, py_name_re
 
 param_regex = re.compile(
     r"^(?P<indent>\s*)[:@](?:param|arg) (?:(?P<type>{}) )?(?P<name>{}):(?:\s+(?P<doc>.*))?\s*$".format(

@@ -1,11 +1,12 @@
 # coding:utf-8
-from typing import Union, Any
-from tempfile import mktemp
+from functools import singledispatch
 from inspect import getmro
 from itertools import repeat
-from functools import singledispatch
+from tempfile import mktemp
+from typing import Any, Union
+
+from .types import ForwardRef, LazyType, get_generic_args, get_generic_origin
 from .types.compat import NEW_TYPING
-from .types import get_generic_origin, get_generic_args, LazyType, ForwardRef
 
 
 def classpath(t: type):
