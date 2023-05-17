@@ -2,8 +2,9 @@
 import os
 from itertools import chain
 from pathlib import Path
-from setuptools import find_packages
+
 import pytest
+from setuptools import find_packages
 
 module = type(os)
 

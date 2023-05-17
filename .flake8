@@ -1,0 +1,23 @@
+[flake8]
+# ANN = Missing type annotation warnings
+# B = bugbear
+# B9 = bugbear opinions
+# BLK = black style warnings
+# C = mccabe code complexity
+# E = pycodestyle errors
+# F = pyflakes errors
+# I = import order warnings
+# W = pycodestyle warnings
+select = ANN,B,B9,BLK,C,E,F,I,W
+# ANN401 = Dynamically typed expressions (typing.Any) are disallowed
+# B904 = within an `except` clause, raise exceptions with `raise ... from err`
+# E203 = slice notation whitespace, invalid
+# E501 = line length, handled by bugbear B950
+# S301, S403 = pickle warnings from security
+# W503 = bin op line break, invalid
+ignore = ANN401, B904, E203, E501, W503
+# up to 88 allowed by bugbear B950
+max-line-length = 80
+max-complexity = 18
+application-import-names = bourbaki.application
+per-file-ignores = tests/*:S101
