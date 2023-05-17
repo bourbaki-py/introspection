@@ -128,7 +128,6 @@ if sys.version_info[:2] >= (3, 7):  # pragma: no cover
             return typing_bases.get(t, ())
         return _get_generic_bases(t) or ()
 
-
 else:  # pragma: no cover
     from typing import _ForwardRef as ForwardRef
     from typing import _TypeAlias
@@ -194,7 +193,7 @@ def _get_generic_origin_sig(sig):
 
 @get_generic_origin.register(_TypeAlias)
 def _get_alias_origin(
-    alias
+    alias,
 ):  # pragma: no cover (python3.6 only, works if tests pass - they include Pattern)
     return getattr(typing, alias.name)
 

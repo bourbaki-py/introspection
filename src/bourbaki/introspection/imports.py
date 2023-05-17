@@ -1,21 +1,20 @@
 # coding:utf-8
-from typing import Tuple, Union
-import typing
-import builtins
-from typing import Callable
 import ast
-from functools import singledispatch
+import builtins
 import os
 import re
 import sys
-from types import MethodType, FunctionType
-from functools import partial, update_wrapper
-from textwrap import indent
-from inspect import stack
+import typing
+from functools import partial, singledispatch, update_wrapper
 from importlib import import_module
+from inspect import stack
 from logging import getLogger
+from textwrap import indent
+from types import FunctionType, MethodType
+from typing import Callable, Tuple, Union
+
+from .types.compat import ForwardRef, typetypes, typing_to_stdlib_constructor
 from .utils import py_dot_name_re
-from .types.compat import typing_to_stdlib_constructor, ForwardRef, typetypes
 
 # we'll import this on call to import_type to avoid a circular import
 eval_type_tree = None
@@ -124,7 +123,7 @@ def _to_index_expr(node):
 
 @_to_typetree_expr.register(ast.Subscript)
 def _to_typetree_expr_subscript(
-    node: ast.Index
+    node: ast.Index,
 ) -> Tuple[Union[str, Tuple[str, ...]], ...]:
     cp = _to_classpath(node.value)
     index_cps = _to_index_expr(node.slice.value)
@@ -175,7 +174,7 @@ def _to_index_expr_tuple(node: ast.Tuple) -> Tuple[Union[str, Tuple[str, ...]], 
 
 @_to_index_expr.register(ast.Subscript)
 def _to_index_expr_subscript(
-    node: ast.Subscript
+    node: ast.Subscript,
 ) -> Tuple[Union[str, Tuple[str, ...]], ...]:
     return (_to_typetree_expr(node),)
 

@@ -44,7 +44,6 @@ if NEW_TYPING:
             return t._name
         return "{}.{}".format(t.__module__, get_qualname(t))
 
-
 else:
 
     def get_qualname(t: type):
