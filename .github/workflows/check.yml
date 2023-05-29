@@ -1,4 +1,5 @@
 name: Lint, Typecheck and Test
+id: lint-check-test
 on: [push]
 jobs:
   tests:
