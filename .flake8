@@ -5,6 +5,7 @@
 # C = mccabe code complexity
 # E = pycodestyle errors
 # F = pyflakes errors
+# I = isort style warnings
 # W = pycodestyle warnings
 select = B,B9,BLK,C,E,F,W
 # B904 = within an `except` clause, raise exceptions with `raise ... from err`

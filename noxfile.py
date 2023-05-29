@@ -6,8 +6,8 @@ nox.options.sessions = "lint", "mypy", "tests"
 
 PACKAGE = "bourbaki-introspection"
 LOCATIONS = "src", "tests", "./noxfile.py"
-PYTHON = "3.11"
-PYTHONS = ["3.11", "3.10", "3.9", "3.8", "3.7"]
+PYTHON = "3.9"
+PYTHONS = ["3.9", "3.8", "3.7"]
 
 
 # Formatting
