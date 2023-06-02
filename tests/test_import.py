@@ -2,16 +2,17 @@
 import os
 from itertools import chain
 from pathlib import Path
-from setuptools import find_packages
+
 import pytest
+from setuptools import find_namespace_packages
 
 module = type(os)
 
-top_dir = Path(__file__).parent.parent
+top_dir = Path(__file__).parent.parent / "src"
 
 
 def all_module_paths(rootdir):
-    parents = find_packages(rootdir)
+    parents = find_namespace_packages(rootdir)
     return list(chain(parents, chain.from_iterable(map(submodule_paths, parents))))
 
 

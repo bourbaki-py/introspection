@@ -1,6 +1,7 @@
 # coding:utf-8
 import pytest
-from bourbaki.introspection.docstrings import parse_docstring, CallableDocs, DocStyle
+
+from bourbaki.introspection.docstrings import CallableDocs, DocStyle, parse_docstring
 
 
 def foo(x: int, y: str, z: object = None) -> list:

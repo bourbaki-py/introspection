@@ -1,6 +1,6 @@
 # coding:utf-8
 
-from bourbaki.introspection.callables import is_staticmethod, is_classmethod, is_method
+from bourbaki.introspection.callables import is_classmethod, is_method, is_staticmethod
 
 
 class Foo:

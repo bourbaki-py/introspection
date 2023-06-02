@@ -1,21 +1,15 @@
-from typing import *
 from itertools import chain, repeat
+from typing import *
+
 import pytest
 
-from bourbaki.introspection.types import (
-    issubclass_generic as isg,
-    get_generic_args as gga,
-)
-from bourbaki.introspection.types import (
-    is_named_tuple_class as intc,
-    concretize_typevars as ctv,
-)
-from bourbaki.introspection.types import (
-    reparameterize_generic as rpg,
-    eval_forward_refs as efr,
-)
-from bourbaki.introspection.callables import Starred, UnStarred
-
+from bourbaki.introspection.callables import UnStarred
+from bourbaki.introspection.types import concretize_typevars as ctv
+from bourbaki.introspection.types import eval_forward_refs as efr
+from bourbaki.introspection.types import get_generic_args as gga
+from bourbaki.introspection.types import is_named_tuple_class as intc
+from bourbaki.introspection.types import issubclass_generic as isg
+from bourbaki.introspection.types import reparameterize_generic as rpg
 
 T = TypeVar("T", int, str, covariant=True)
 

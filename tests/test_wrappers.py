@@ -1,12 +1,14 @@
 # coding:utf-8
-from typing import *
 from functools import lru_cache
 from inspect import signature
+from typing import *
+
 import pytest
+
 from bourbaki.introspection.wrappers import (
-    lru_cache_sig_preserving,
     cached_getter,
     const,
+    lru_cache_sig_preserving,
 )
 
 

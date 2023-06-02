@@ -2,8 +2,8 @@ import io
 import pickle
 import typing
 
-from graphviz import Digraph
 import pytest
+from graphviz import Digraph
 
 from bourbaki.introspection.generic_dispatch import GenericTypeLevelSingleDispatch
 

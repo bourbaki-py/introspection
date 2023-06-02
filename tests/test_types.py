@@ -1,33 +1,34 @@
 # coding:utf-8
-from typing import *
-from typing import Pattern, Match, ChainMap, Counter, TypeVar
-import pytest
 import collections
-from collections import abc as collections_abc
 import functools
-from numbers import Number, Integral, Real
 import sys
-from itertools import repeat, chain, product, combinations
-from bourbaki.introspection.types import deconstruct_generic, reconstruct_generic
+from collections import abc as collections_abc
+from itertools import chain, combinations, product, repeat
+from numbers import Integral, Number, Real
+from typing import *
+from typing import ChainMap, Counter, Match, Pattern, TypeVar
+
+import pytest
+
 from bourbaki.introspection.types import (
-    issubclass_generic,
-    get_generic_params,
-    deconstruct_generic,
-    reconstruct_generic,
-    get_constructor_for,
-    eval_forward_refs,
-    constraint_type,
-    LazyType,
     Builtin,
     BuiltinAtomic,
-    NonStdLib,
-    NonStrCollection,
+    LazyType,
+    NamedTupleABC,
     NonAnyStrCollection,
-    NonStrSequence,
     NonAnyStrSequence,
     NonCollection,
-    NamedTupleABC,
+    NonStdLib,
+    NonStrCollection,
+    NonStrSequence,
     PseudoGenericMeta,
+    constraint_type,
+    deconstruct_generic,
+    eval_forward_refs,
+    get_constructor_for,
+    get_generic_params,
+    issubclass_generic,
+    reconstruct_generic,
 )
 
 

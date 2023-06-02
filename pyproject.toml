@@ -1,0 +1,109 @@
+[tool.poetry]
+name = "bourbaki-introspection"
+version = "0.5.10"
+description = "Utilities for introspecting python objects at runtime."
+authors = ["Matthew Hawthorn <hawthorn.matthew@gmail.com>"]
+classifiers = [
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.7",
+	"Programming Language :: Python :: 3.8",
+	"License :: OSI Approved :: Apache Software License",
+	"Operating System :: POSIX :: Linux",
+	"Operating System :: MacOS :: MacOS X",
+	"Topic :: Software Development :: Libraries :: Python Modules",
+	"Topic :: Software Development :: Code Generators",
+	"Topic :: Utilities",
+	"Typing :: Typed"
+]
+license = "Apache-2.0"
+readme = "README.md"
+homepage = "https://github.com/bourbaki-py"
+repository = "https://github.com/bourbaki-py/introspection"
+packages = [{include = "bourbaki", from="src"}]
+include = ["py.typed"]
+
+# Dependencies
+
+[tool.poetry.dependencies]
+python = "^3.7"
+multipledispatch = ">=0.4.9"
+typing-inspect = ">=0.5"
+importlib_metadata = {version = "*", python = "<3.8"}
+
+## Extras
+
+graphviz = {version = "*", optional = true}
+networkx = {version = "*", optional = true}
+
+[tool.poetry.extras]
+viz = ["graphviz", "networkx"]
+
+## Formatting
+
+[tool.poetry.group.black.dependencies]
+black = ">=22.3"
+
+[tool.poetry.group.isort.dependencies]
+isort = ">=5.10"
+
+## Linting
+
+[tool.poetry.group.lint.dependencies]
+flake8 = ">=5.0"
+flake8-black = ">=0.3"
+
+flake8-bugbear = ">=22.4"
+
+## Typechecking
+flake8-isort = "^6.0.0"
+
+[tool.poetry.group.mypy.dependencies]
+mypy = ">=1.0"
+nox = "*"
+pytest = "*"
+types-setuptools = "*"
+
+## Testing
+
+[tool.poetry.group.test.dependencies]
+coverage = {version = "*", extras = ["toml"]}
+pytest = "*"
+pytest-cov = "*"
+graphviz = "*"
+networkx = "*"
+setuptools = "*"
+
+# Other Tools
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 70
+
+[tool.coverage.run]
+branch = true
+source = ["bourbaki.introspection"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+# Ignores files/directories in the .gitignore.
+skip_gitignore = true
+
+[tool.mypy]
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["graphviz", "multipledispatch", "networkx", "typing_inspect"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["poetry>=1.0.0"]
+build-backend = "poetry.masonry.api"

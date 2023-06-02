@@ -1,9 +1,10 @@
 # coding:utf-8
-from typing import *
-from typing import Pattern, Match, ChainMap, Counter, Collection, TypeVar, Generic
 import types
+from numbers import Integral, Number
+from typing import *
+from typing import Collection, Generic, TypeVar
+
 import pytest
-from numbers import Number, Integral
 
 from bourbaki.introspection.typechecking import isinstance_generic
 
