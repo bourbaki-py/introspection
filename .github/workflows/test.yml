@@ -1,5 +1,4 @@
-name: Lint, Typecheck and Test
-id: lint-check-test
+name: Test
 on: [push]
 jobs:
   tests:
@@ -8,7 +7,7 @@ jobs:
       matrix:
         python-version: ['3.9', '3.8', '3.7']
         os: [ubuntu-latest]
-    name: Lint/Check/Test - Python ${{ matrix.python-version }} - ${{ matrix.os }}
+    name: Test - Python ${{ matrix.python-version }} - ${{ matrix.os }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
