@@ -1,6 +1,6 @@
 # coding:utf-8
 from typing import Generic
-import collections
+import collections.abc
 from functools import partial
 from inspect import Parameter
 from itertools import repeat
@@ -132,7 +132,7 @@ class NamedTupleWrapper(TupleWrapper):
             self.reduce_named = self.get_named_reducer(tup_type)
 
     def __call__(self, value):
-        if isinstance(value, collections.Mapping):
+        if isinstance(value, collections.abc.Mapping):
             kwargs = ((name, self.named_funcs[name](v)) for name, v in value.items())
             return self.reduce_named(kwargs)
         return super().__call__(value)
@@ -153,7 +153,7 @@ class MappingWrapper(ReducingGenericWrapper):
         self.valfunc = self.getter(val_type)
 
     def call_iter(self, value):
-        if isinstance(value, collections.Mapping):
+        if isinstance(value, collections.abc.Mapping):
             keyvals = value.items()
         else:
             keyvals = iter(value)
