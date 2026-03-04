@@ -1,0 +1,35 @@
+[project]
+name = "bourbaki.introspection"
+description = "Introspection utilities for Python: types, signatures, objects, docstrings, and more"
+version = "0.5.12"
+authors = [
+    {name = "Matthew Hawthorn", email = "hawthorn.matthew@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+dependencies = [
+    "multipledispatch>=0.4.9",
+    "typing-inspect>=0.5",
+]
+
+[project.urls]
+homepage = "https://github.com/bourbaki-py/"
+repository = "https://github.com/bourbaki-py/introspection.git"
+
+[project.optional-dependencies]
+viz = ["graphviz", "networkx"]
