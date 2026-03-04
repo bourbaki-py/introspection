@@ -7,9 +7,9 @@ import collections
 from itertools import combinations
 from functools import singledispatch
 import typing_inspect
+from typing import get_origin
 from typing_inspect import (
     is_callable_type,
-    get_origin,
     get_parameters as ti_get_parameters,
     get_generic_bases as _get_generic_bases,
 )

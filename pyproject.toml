@@ -1,7 +1,7 @@
 [project]
 name = "bourbaki.introspection"
 description = "Introspection utilities for Python: types, signatures, objects, docstrings, and more"
-version = "0.5.12"
+version = "0.5.13"
 authors = [
     {name = "Matthew Hawthorn", email = "hawthorn.matthew@gmail.com"}
 ]
