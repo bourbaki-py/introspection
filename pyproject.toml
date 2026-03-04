@@ -6,7 +6,7 @@ authors = [
     {name = "Matthew Hawthorn", email = "hawthorn.matthew@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 license = "Apache-2.0"
 classifiers = [
     "Programming Language :: Python :: 3",
